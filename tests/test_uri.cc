@@ -1,11 +1,11 @@
-#include "sylar/uri.h"
+#include "sy/uri.h"
 #include <iostream>
 
 int main(int argc, char** argv) {
-    //sylar::Uri::ptr uri = sylar::Uri::Create("http://www.sylar.top/test/uri?id=100&name=sylar#frg");
-    //sylar::Uri::ptr uri = sylar::Uri::Create("http://admin@www.sylar.top/test/中文/uri?id=100&name=sylar&vv=中文#frg中文");
-    sylar::Uri::ptr uri = sylar::Uri::Create("http://admin@www.sylar.top");
-    //sylar::Uri::ptr uri = sylar::Uri::Create("http://www.sylar.top/test/uri");
+    //sy::Uri::ptr uri = sy::Uri::Create("http://www.sy.top/test/uri?id=100&name=sy#frg");
+    //sy::Uri::ptr uri = sy::Uri::Create("http://admin@www.sy.top/test/中文/uri?id=100&name=sy&vv=中文#frg中文");
+    sy::Uri::ptr uri = sy::Uri::Create("http://admin@www.sy.top");
+    //sy::Uri::ptr uri = sy::Uri::Create("http://www.sy.top/test/uri");
     std::cout << uri->toString() << std::endl;
     auto addr = uri->createAddress();
     std::cout << *addr << std::endl;

@@ -1,17 +1,17 @@
-#ifndef __SYLAR_HTTP_SERVLETS_CONFIG_SERVLET_H__
-#define __SYLAR_HTTP_SERVLETS_CONFIG_SERVLET_H__
+#ifndef __SY_HTTP_SERVLETS_CONFIG_SERVLET_H__
+#define __SY_HTTP_SERVLETS_CONFIG_SERVLET_H__
 
-#include "sylar/http/servlet.h"
+#include "sy/http/servlet.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 class ConfigServlet : public Servlet {
 public:
     ConfigServlet();
-    virtual int32_t handle(sylar::http::HttpRequest::ptr request
-                   , sylar::http::HttpResponse::ptr response
-                   , sylar::http::HttpSession::ptr session) override;
+    virtual int32_t handle(sy::http::HttpRequest::ptr request
+                   , sy::http::HttpResponse::ptr response
+                   , sy::http::HttpSession::ptr session) override;
 };
 
 }

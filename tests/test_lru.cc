@@ -1,7 +1,7 @@
-#include "sylar/ds/lru_cache.h"
+#include "sy/ds/lru_cache.h"
 
 void test_lru() {
-    sylar::ds::LruCache<int, int> cache(30, 10);
+    sy::ds::LruCache<int, int> cache(30, 10);
 
     for(int i = 0; i < 105; ++i) {
         cache.set(i, i * 100);
@@ -18,7 +18,7 @@ void test_lru() {
 }
 
 void test_hash_lru() {
-    sylar::ds::HashLruCache<int, int> cache(2, 30, 10);
+    sy::ds::HashLruCache<int, int> cache(2, 30, 10);
 
     for(int i = 0; i < 105; ++i) {
         cache.set(i, i * 100);

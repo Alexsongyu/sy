@@ -1,15 +1,15 @@
-#include "sylar/daemon.h"
-#include "sylar/iomanager.h"
-#include "sylar/log.h"
+#include "sy/daemon.h"
+#include "sy/iomanager.h"
+#include "sy/log.h"
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+static sy::Logger::ptr g_logger = SY_LOG_ROOT();
 
-sylar::Timer::ptr timer;
+sy::Timer::ptr timer;
 int server_main(int argc, char** argv) {
-    SYLAR_LOG_INFO(g_logger) << sylar::ProcessInfoMgr::GetInstance()->toString();
-    sylar::IOManager iom(1);
+    SY_LOG_INFO(g_logger) << sy::ProcessInfoMgr::GetInstance()->toString();
+    sy::IOManager iom(1);
     timer = iom.addTimer(1000, [](){
-            SYLAR_LOG_INFO(g_logger) << "onTimer";
+            SY_LOG_INFO(g_logger) << "onTimer";
             static int count = 0;
             if(++count > 10) {
                 exit(1);
@@ -19,5 +19,5 @@ int server_main(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-    return sylar::start_daemon(argc, argv, server_main, argc != 1);
+    return sy::start_daemon(argc, argv, server_main, argc != 1);
 }

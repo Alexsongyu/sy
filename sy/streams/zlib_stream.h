@@ -1,7 +1,7 @@
-#ifndef __SYLAR_STREAMS_ZLIB_STREAM_H__
-#define __SYLAR_STREAMS_ZLIB_STREAM_H__
+#ifndef __SY_STREAMS_ZLIB_STREAM_H__
+#define __SY_STREAMS_ZLIB_STREAM_H__
 
-#include "sylar/stream.h"
+#include "sy/stream.h"
 #include <sys/uio.h>
 #include <zlib.h>
 #include <stdint.h>
@@ -9,7 +9,7 @@
 #include <string>
 #include <memory>
 
-namespace sylar {
+namespace sy {
 
 class ZlibStream : public Stream {
 public:
@@ -62,7 +62,7 @@ public:
 
     std::vector<iovec>& getBuffers() { return m_buffs;}
     std::string getResult() const;
-    sylar::ByteArray::ptr getByteArray();
+    sy::ByteArray::ptr getByteArray();
 private:
     int init(Type type = DEFLATE, int level = DEFAULT_COMPRESSION
              ,int window_bits = 15, int memlevel = 8, Strategy strategy = DEFAULT);

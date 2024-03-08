@@ -1,22 +1,22 @@
 /**
  * @file http_connection.h
  * @brief HTTP客户端类
- * @author sylar.yin
+ * @author sy.yin
  * @email 564628276@qq.com
  * @date 2019-06-11
- * @copyright Copyright (c) 2019年 sylar.yin All rights reserved (www.sylar.top)
+ * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
  */
-#ifndef __SYLAR_HTTP_CONNECTION_H__
-#define __SYLAR_HTTP_CONNECTION_H__
+#ifndef __SY_HTTP_CONNECTION_H__
+#define __SY_HTTP_CONNECTION_H__
 
-#include "sylar/streams/socket_stream.h"
+#include "sy/streams/socket_stream.h"
 #include "http.h"
-#include "sylar/uri.h"
-#include "sylar/thread.h"
+#include "sy/uri.h"
+#include "sy/thread.h"
 
 #include <list>
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 /**

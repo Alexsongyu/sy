@@ -1,15 +1,15 @@
-#ifndef __SYLAR_DS_ROARING_BITMAP_H__
-#define __SYLAR_DS_ROARING_BITMAP_H__
+#ifndef __SY_DS_ROARING_BITMAP_H__
+#define __SY_DS_ROARING_BITMAP_H__
 
 #include <stdint.h>
 #include <string>
 #include <vector>
 #include <memory>
 #include <functional>
-#include "sylar/bytearray.h"
+#include "sy/bytearray.h"
 #include "roaring.hh"
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 class RoaringBitmap {
@@ -55,8 +55,8 @@ public:
     void foreach(std::function<bool(uint32_t)> cb);
     void rforeach(std::function<bool(uint32_t)> cb);
 
-    void writeTo(sylar::ByteArray::ptr ba) const;
-    bool readFrom(sylar::ByteArray::ptr ba);
+    void writeTo(sy::ByteArray::ptr ba) const;
+    bool readFrom(sy::ByteArray::ptr ba);
 
     //uncompress to compress
     //uncompress to uncompress

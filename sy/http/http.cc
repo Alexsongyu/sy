@@ -1,7 +1,7 @@
 #include "http.h"
-#include "sylar/util.h"
+#include "sy/util.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 HttpMethod StringToHttpMethod(const std::string& m) {
@@ -159,7 +159,7 @@ std::string HttpRequest::toString() const {
 
 std::ostream& HttpRequest::dump(std::ostream& os) const {
     //GET /uri HTTP/1.1
-    //Host: wwww.sylar.top
+    //Host: wwww.sy.top
     //
     //
     os << HttpMethodToString(m_method) << " "
@@ -225,7 +225,7 @@ void HttpRequest::initQueryParam() {
         size_t key = pos; \
         pos = str.find(flag, pos); \
         m.insert(std::make_pair(trim(str.substr(last, key - last)), \
-                    sylar::StringUtil::UrlDecode(str.substr(key + 1, pos - key - 1)))); \
+                    sy::StringUtil::UrlDecode(str.substr(key + 1, pos - key - 1)))); \
         if(pos == std::string::npos) { \
             break; \
         } \
@@ -258,7 +258,7 @@ void HttpRequest::initCookies() {
         m_parserParamFlag |= 0x4;
         return;
     }
-    PARSE_PARAM(cookie, m_cookies, ';', sylar::StringUtil::Trim);
+    PARSE_PARAM(cookie, m_cookies, ';', sy::StringUtil::Trim);
     m_parserParamFlag |= 0x4;
 }
 
@@ -294,7 +294,7 @@ void HttpResponse::setCookie(const std::string& key, const std::string& val,
     std::stringstream ss;
     ss << key << "=" << val;
     if(expired > 0) {
-        ss << ";expires=" << sylar::Time2Str(expired, "%a, %d %b %Y %H:%M:%S") << " GMT";
+        ss << ";expires=" << sy::Time2Str(expired, "%a, %d %b %Y %H:%M:%S") << " GMT";
     }
     if(!domain.empty()) {
         ss << ";domain=" << domain;

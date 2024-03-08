@@ -1,13 +1,13 @@
 /**
  * @file bytearray.h
  * @brief 二进制数组(序列化/反序列化)
- * @author sylar.yin
+ * @author sy.yin
  * @email 564628276@qq.com
  * @date 2019-06-05
- * @copyright Copyright (c) 2019年 sylar.yin All rights reserved (www.sylar.top)
+ * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
  */
-#ifndef __SYLAR_BYTEARRAY_H__
-#define __SYLAR_BYTEARRAY_H__
+#ifndef __SY_BYTEARRAY_H__
+#define __SY_BYTEARRAY_H__
 
 #include <memory>
 #include <string>
@@ -16,7 +16,7 @@
 #include <sys/socket.h>
 #include <vector>
 
-namespace sylar {
+namespace sy {
 
 /**
  * @brief 二进制数组,提供基础类型的序列化,反序列化功能

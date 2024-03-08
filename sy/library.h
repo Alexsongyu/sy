@@ -1,10 +1,10 @@
-#ifndef __SYLAR_LIBRARY_H__
-#define __SYLAR_LIBRARY_H__
+#ifndef __SY_LIBRARY_H__
+#define __SY_LIBRARY_H__
 
 #include <memory>
 #include "module.h"
 
-namespace sylar {
+namespace sy {
 
 class Library {
 public:

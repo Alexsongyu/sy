@@ -1,20 +1,20 @@
 /**
  * @file timer.h
  * @brief 定时器封装
- * @author sylar.yin
+ * @author sy.yin
  * @email 564628276@qq.com
  * @date 2019-05-28
- * @copyright Copyright (c) 2019年 sylar.yin All rights reserved (www.sylar.top)
+ * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
  */
-#ifndef __SYLAR_TIMER_H__
-#define __SYLAR_TIMER_H__
+#ifndef __SY_TIMER_H__
+#define __SY_TIMER_H__
 
 #include <memory>
 #include <vector>
 #include <set>
 #include "thread.h"
 
-namespace sylar {
+namespace sy {
 
 class TimerManager;
 /**

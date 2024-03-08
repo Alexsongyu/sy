@@ -3,10 +3,10 @@
 #include <string.h>
 #include <sstream>
 #include <iostream>
-#include "sylar/log.h"
-#include "sylar/macro.h"
+#include "sy/log.h"
+#include "sy/macro.h"
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 //static uint8_t HEAD[] = {0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF};
@@ -60,14 +60,14 @@ Bitmap::~Bitmap() {
     }
 }
 
-void Bitmap::writeTo(sylar::ByteArray::ptr ba) const {
+void Bitmap::writeTo(sy::ByteArray::ptr ba) const {
     ba->writeFuint8(m_compress);
     ba->writeFuint32(m_size);
     ba->writeFuint32(m_dataSize);
     ba->write((const char*)m_data, m_dataSize * sizeof(base_type));
 }
 
-bool Bitmap::readFrom(sylar::ByteArray::ptr ba) {
+bool Bitmap::readFrom(sy::ByteArray::ptr ba) {
     try {
         m_compress = ba->readFuint8();
         m_size = ba->readFuint32();
@@ -351,8 +351,8 @@ Bitmap::ptr Bitmap::compress() const{
         }
 
         if((cur_count / VALUE_SIZE) > 1) {
-            SYLAR_ASSERT(cur_count % VALUE_SIZE == 0);
-            //SYLAR_ASSERT(cur_count < (1ul << VALUE_SIZE));
+            SY_ASSERT(cur_count % VALUE_SIZE == 0);
+            //SY_ASSERT(cur_count < (1ul << VALUE_SIZE));
             while(cur_count) {
                 data[dst_cur_pos++] = cur_value ? (COMPRESS_MASK | VALUE_MASK | (cur_count & COUNT_MASK)) : (COMPRESS_MASK | (cur_count & COUNT_MASK));
                 cur_count >>= VALUE_SIZE;
@@ -818,8 +818,8 @@ void Bitmap::set(uint32_t from, uint32_t size, bool v) {
     uint32_t cur_to = (from + size) / VALUE_SIZE;
     uint32_t pos_to = (from + size) % VALUE_SIZE;
 
-    SYLAR_ASSERT(pos_from == 0);
-    SYLAR_ASSERT(pos_to == 0);
+    SY_ASSERT(pos_from == 0);
+    SY_ASSERT(pos_to == 0);
 
     for(uint32_t i = cur_from; i < cur_to; ++i) {
         m_data[i] = v ? (COUNT_MASK) : (0);
@@ -835,8 +835,8 @@ bool Bitmap::get(uint32_t from, uint32_t size, bool v) const {
     uint32_t cur_to = (from + size) / VALUE_SIZE;
     uint32_t pos_to = (from + size) % VALUE_SIZE;
 
-    SYLAR_ASSERT(pos_from == 0);
-    SYLAR_ASSERT(pos_to == 0);
+    SY_ASSERT(pos_from == 0);
+    SY_ASSERT(pos_to == 0);
 
     for(uint32_t i = cur_from; i < cur_to; ++i) {
         if(v) {

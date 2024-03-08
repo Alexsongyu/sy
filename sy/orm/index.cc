@@ -1,11 +1,11 @@
 #include "index.h"
-#include "sylar/log.h"
-#include "sylar/util.h"
+#include "sy/log.h"
+#include "sy/util.h"
 
-namespace sylar {
+namespace sy {
 namespace orm {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("orm");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("orm");
 
 Index::Type Index::ParseType(const std::string& v) {
 #define XX(a, b) \
@@ -33,29 +33,29 @@ std::string Index::TypeToString(Type v) {
 
 bool Index::init(const tinyxml2::XMLElement& node) {
     if(!node.Attribute("name")) {
-        SYLAR_LOG_ERROR(g_logger) << "index name not exists";
+        SY_LOG_ERROR(g_logger) << "index name not exists";
         return false;
     }
     m_name = node.Attribute("name");
 
     if(!node.Attribute("type")) {
-        SYLAR_LOG_ERROR(g_logger) << "index name=" << m_name << " type is null";
+        SY_LOG_ERROR(g_logger) << "index name=" << m_name << " type is null";
         return false;
     }
 
     m_type = node.Attribute("type");
     m_dtype = ParseType(m_type);
     if(m_dtype == TYPE_NULL) {
-        SYLAR_LOG_ERROR(g_logger) << "index name=" << m_name << " type=" << m_type
+        SY_LOG_ERROR(g_logger) << "index name=" << m_name << " type=" << m_type
             << " invalid (pk, index, uniq)";
         return false;
     }
 
     if(!node.Attribute("cols")) {
-        SYLAR_LOG_ERROR(g_logger) << "index name=" << m_name << " cols is null";
+        SY_LOG_ERROR(g_logger) << "index name=" << m_name << " cols is null";
     }
     std::string tmp = node.Attribute("cols");
-    m_cols = sylar::split(tmp, ',');
+    m_cols = sy::split(tmp, ',');
 
     if(node.Attribute("desc")) {
         m_desc = node.Attribute("desc");

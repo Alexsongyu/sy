@@ -1,25 +1,25 @@
 /**
  * @file sqlite3.h
  * @brief SQLite3封装
- * @author sylar.yin
+ * @author sy.yin
  * @email 564628276@qq.com
  * @date 2019-07-07
- * @copyright Copyright (c) 2019年 sylar.yin All rights reserved (www.sylar.top)
+ * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
  */
-#ifndef __SYLAR_DB_SQLITE3_H__
-#define __SYLAR_DB_SQLITE3_H__
+#ifndef __SY_DB_SQLITE3_H__
+#define __SY_DB_SQLITE3_H__
 
 #include <sqlite3.h>
 #include <memory>
 #include <string>
 #include <list>
 #include <map>
-#include "sylar/noncopyable.h"
+#include "sy/noncopyable.h"
 #include "db.h"
-#include "sylar/mutex.h"
-#include "sylar/singleton.h"
+#include "sy/mutex.h"
+#include "sy/singleton.h"
 
-namespace sylar {
+namespace sy {
 
 class SQLite3Stmt;
 
@@ -212,7 +212,7 @@ private:
 
 class SQLite3Manager {
 public:
-    typedef sylar::Mutex MutexType;
+    typedef sy::Mutex MutexType;
     SQLite3Manager();
     ~SQLite3Manager();
 
@@ -242,7 +242,7 @@ private:
     std::map<std::string, std::map<std::string, std::string> > m_dbDefines;
 };
 
-typedef sylar::Singleton<SQLite3Manager> SQLite3Mgr;
+typedef sy::Singleton<SQLite3Manager> SQLite3Mgr;
 
 namespace {
 template<typename... Args>

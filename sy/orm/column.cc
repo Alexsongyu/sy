@@ -1,11 +1,11 @@
 #include "column.h"
-#include "sylar/log.h"
+#include "sy/log.h"
 #include "util.h"
 
-namespace sylar {
+namespace sy {
 namespace orm {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("orm");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("orm");
 
 Column::Type Column::ParseType(const std::string& v) {
 #define XX(a, b, c) \
@@ -167,7 +167,7 @@ std::string Column::getDefaultValueString() {
     if(m_default == "current_timestamp") {
         return "time(0)";
     }
-    return "sylar::Str2Time(\"" + m_default + "\")";
+    return "sy::Str2Time(\"" + m_default + "\")";
 }
 
 std::string Column::getSQLite3Default() {
@@ -191,20 +191,20 @@ std::string Column::getSQLite3Default() {
 
 bool Column::init(const tinyxml2::XMLElement& node) {
     if(!node.Attribute("name")) {
-        SYLAR_LOG_ERROR(g_logger) << "column name not exists";
+        SY_LOG_ERROR(g_logger) << "column name not exists";
         return false;
     }
     m_name = node.Attribute("name");
 
     if(!node.Attribute("type")) {
-        SYLAR_LOG_ERROR(g_logger) << "column name=" << m_name
+        SY_LOG_ERROR(g_logger) << "column name=" << m_name
             << " type is null";
         return false;
     }
     m_type = node.Attribute("type");
     m_dtype = ParseType(m_type);
     if(m_dtype == TYPE_NULL) {
-        SYLAR_LOG_ERROR(g_logger) << "column name=" << m_name
+        SY_LOG_ERROR(g_logger) << "column name=" << m_name
             << " type=" << m_type
             << " type is invalid";
         return false;

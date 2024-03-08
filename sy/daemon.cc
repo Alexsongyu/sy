@@ -1,24 +1,24 @@
 #include "daemon.h"
-#include "sylar/log.h"
-#include "sylar/config.h"
+#include "sy/log.h"
+#include "sy/config.h"
 #include <time.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
-static sylar::ConfigVar<uint32_t>::ptr g_daemon_restart_interval
-    = sylar::Config::Lookup("daemon.restart_interval", (uint32_t)5, "daemon restart interval");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
+static sy::ConfigVar<uint32_t>::ptr g_daemon_restart_interval
+    = sy::Config::Lookup("daemon.restart_interval", (uint32_t)5, "daemon restart interval");
 
 std::string ProcessInfo::toString() const {
     std::stringstream ss;
     ss << "[ProcessInfo parent_id=" << parent_id
        << " main_id=" << main_id
-       << " parent_start_time=" << sylar::Time2Str(parent_start_time)
-       << " main_start_time=" << sylar::Time2Str(main_start_time)
+       << " parent_start_time=" << sy::Time2Str(parent_start_time)
+       << " main_start_time=" << sy::Time2Str(main_start_time)
        << " restart_count=" << restart_count << "]";
     return ss.str();
 }
@@ -41,10 +41,10 @@ static int real_daemon(int argc, char** argv,
             //子进程返回
             ProcessInfoMgr::GetInstance()->main_id = getpid();
             ProcessInfoMgr::GetInstance()->main_start_time  = time(0);
-            SYLAR_LOG_INFO(g_logger) << "process start pid=" << getpid();
+            SY_LOG_INFO(g_logger) << "process start pid=" << getpid();
             return real_start(argc, argv, main_cb);
         } else if(pid < 0) {
-            SYLAR_LOG_ERROR(g_logger) << "fork fail return=" << pid
+            SY_LOG_ERROR(g_logger) << "fork fail return=" << pid
                 << " errno=" << errno << " errstr=" << strerror(errno);
             return -1;
         } else {
@@ -53,14 +53,14 @@ static int real_daemon(int argc, char** argv,
             waitpid(pid, &status, 0);
             if(status) {
                 if(status == 9) {
-                    SYLAR_LOG_INFO(g_logger) << "killed";
+                    SY_LOG_INFO(g_logger) << "killed";
                     break;
                 } else {
-                    SYLAR_LOG_ERROR(g_logger) << "child crash pid=" << pid
+                    SY_LOG_ERROR(g_logger) << "child crash pid=" << pid
                         << " status=" << status;
                 }
             } else {
-                SYLAR_LOG_INFO(g_logger) << "child finished pid=" << pid;
+                SY_LOG_INFO(g_logger) << "child finished pid=" << pid;
                 break;
             }
             ProcessInfoMgr::GetInstance()->restart_count += 1;

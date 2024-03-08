@@ -1,4 +1,4 @@
-package sylar.ns;
+package sy.ns;
 
 message Node {
     optional string ip = 1;     //ip地址

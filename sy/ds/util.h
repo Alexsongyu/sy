@@ -1,18 +1,18 @@
-#ifndef __SYLAR_DS_UTIL_H__
-#define __SYLAR_DS_UTIL_H__
+#ifndef __SY_DS_UTIL_H__
+#define __SY_DS_UTIL_H__
 
-#include "sylar/util.h"
+#include "sy/util.h"
 #include <math.h>
 #include <vector>
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 template<class T, uint32_t seed = 1009150517>
 class Murmur3Hash {
 public:
     uint32_t operator()(const T& data) {
-        return sylar::murmur3_hash(&data, sizeof(T), seed);
+        return sy::murmur3_hash(&data, sizeof(T), seed);
     }
 };
 
@@ -102,7 +102,7 @@ template<uint32_t seed>
 class Murmur3Hash<std::string, seed> {
 public:
     uint32_t operator()(const std::string& data) {
-        return sylar::murmur3_hash(data.data(), data.size(), seed);
+        return sy::murmur3_hash(data.data(), data.size(), seed);
     }
 };
 
@@ -110,7 +110,7 @@ template<class T, uint32_t seed>
 class Murmur3Hash<std::vector<T>, seed> {
 public:
     uint32_t operator()(const std::vector<T>& data) {
-        return sylar::murmur3_hash(&data[0], data.size() * sizeof(T), seed);
+        return sy::murmur3_hash(&data[0], data.size() * sizeof(T), seed);
     }
 };
 
@@ -119,7 +119,7 @@ template<class T, uint32_t seed = 1060627423, uint32_t seed2 = 1050126127>
 class Murmur3Hash64 {
 public:
     uint64_t operator()(const T& data) {
-        return sylar::murmur3_hash64(&data, sizeof(T), seed, seed2);
+        return sy::murmur3_hash64(&data, sizeof(T), seed, seed2);
     }
 };
 
@@ -127,7 +127,7 @@ template<uint32_t seed, uint32_t seed2>
 class Murmur3Hash64<std::string, seed, seed2> {
 public:
     uint64_t operator()(const std::string& data) {
-        return sylar::murmur3_hash64(data.data(), data.size(), seed, seed2);
+        return sy::murmur3_hash64(data.data(), data.size(), seed, seed2);
     }
 };
 
@@ -135,7 +135,7 @@ template<class T, uint32_t seed, uint32_t seed2>
 class Murmur3Hash64<std::vector<T>, seed, seed2> {
 public:
     uint32_t operator()(const std::vector<T>& data) {
-        return sylar::murmur3_hash64(&data[0], data.size() * sizeof(T), seed, seed2);
+        return sy::murmur3_hash64(&data[0], data.size() * sizeof(T), seed, seed2);
     }
 };
 

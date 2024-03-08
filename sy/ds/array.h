@@ -1,12 +1,12 @@
-#ifndef __SYLAR_DS_ARRAY_H__
-#define __SYLAR_DS_ARRAY_H__
+#ifndef __SY_DS_ARRAY_H__
+#define __SY_DS_ARRAY_H__
 
 #include <memory>
 #include <stdint.h>
 #include <iostream>
-#include "sylar/util.h"
+#include "sy/util.h"
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 template<class T>

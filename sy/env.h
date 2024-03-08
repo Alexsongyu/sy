@@ -1,12 +1,12 @@
-#ifndef __SYLAR_ENV_H__
-#define __SYLAR_ENV_H__
+#ifndef __SY_ENV_H__
+#define __SY_ENV_H__
 
-#include "sylar/singleton.h"
-#include "sylar/thread.h"
+#include "sy/singleton.h"
+#include "sy/thread.h"
 #include <map>
 #include <vector>
 
-namespace sylar {
+namespace sy {
 
 class Env {
 public:
@@ -41,7 +41,7 @@ private:
     std::string m_cwd;
 };
 
-typedef sylar::Singleton<Env> EnvMgr;
+typedef sy::Singleton<Env> EnvMgr;
 
 }
 

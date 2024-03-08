@@ -5,6 +5,8 @@
 #include <iostream>
 
 #if 1
+// 通过 sy::Config::Lookup 方法创建和初始化各种类型的配置变量
+// 例如：设置默认端口号，名称：system.port，值：8080，描述：system port
 sy::ConfigVar<int>::ptr g_int_value_config =
     sy::Config::Lookup("system.port", (int)8080, "system port");
 
@@ -32,6 +34,7 @@ sy::ConfigVar<std::map<std::string, int> >::ptr g_str_int_map_value_config =
 sy::ConfigVar<std::unordered_map<std::string, int> >::ptr g_str_int_umap_value_config =
     sy::Config::Lookup("system.str_int_umap", std::unordered_map<std::string, int>{{"k",2}}, "system str int map");
 
+// 测试如何加载和遍历YAML
 void print_yaml(const YAML::Node& node, int level) {
     if(node.IsScalar()) {
         SY_LOG_INFO(SY_LOG_ROOT()) << std::string(level * 4, ' ')
@@ -55,6 +58,8 @@ void print_yaml(const YAML::Node& node, int level) {
     }
 }
 
+// 测试 YAML 文件的加载和解析功能
+// 加载 YAML 文件并使用 print_yaml() 递归遍历 YAML 节点，打印出节点信息
 void test_yaml() {
     YAML::Node root = YAML::LoadFile("/home/sy/workspace/sy/bin/conf/log.yml");
     //print_yaml(root, 0);
@@ -65,6 +70,9 @@ void test_yaml() {
     SY_LOG_INFO(SY_LOG_ROOT()) << root;
 }
 
+// 测试配置变量的加载和变更
+// 在加载 YAML 配置文件前后，通过宏 XX 和 XX_M 打印不同类型的配置变量的值
+// 通过 sy::Config::LoadFromYaml 方法加载 YAML 配置文件来更新配置变量的值
 void test_config() {
     SY_LOG_INFO(SY_LOG_ROOT()) << "before: " << g_int_value_config->getValue();
     SY_LOG_INFO(SY_LOG_ROOT()) << "before: " << g_float_value_config->toString();
@@ -175,6 +183,8 @@ sy::ConfigVar<std::map<std::string, Person> >::ptr g_person_map =
 sy::ConfigVar<std::map<std::string, std::vector<Person> > >::ptr g_person_vec_map =
     sy::Config::Lookup("class.vec_map", std::map<std::string, std::vector<Person> >(), "system person");
 
+// 测试自定义类型的配置变量：自定义的Person类和为其实现的 LexicalCast 模板特化
+// 创建和管理自定义类型的配置变量，监听配置变量的变更事件
 void test_class() {
     SY_LOG_INFO(SY_LOG_ROOT()) << "before: " << g_person->getValue().toString() << " - " << g_person->toString();
 
@@ -203,6 +213,7 @@ void test_class() {
     SY_LOG_INFO(SY_LOG_ROOT()) << "after: " << g_person_vec_map->toString();
 }
 
+// 加载日志配置文件，展示如何配置和使用日志系统
 void test_log() {
     static sy::Logger::ptr system_log = SY_LOG_NAME("system");
     SY_LOG_INFO(system_log) << "hello system" << std::endl;
@@ -219,6 +230,7 @@ void test_log() {
     SY_LOG_INFO(system_log) << "hello system" << std::endl;
 }
 
+// 展示如何加载指定目录下的所有配置文件
 void test_loadconf() {
     sy::Config::LoadFromConfDir("conf");
 }

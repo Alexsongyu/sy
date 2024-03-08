@@ -1,7 +1,7 @@
 #include "json_util.h"
-#include "sylar/util.h"
+#include "sy/util.h"
 
-namespace sylar {
+namespace sy {
 
 bool JsonUtil::NeedEscape(const std::string& v) {
     for(auto& c : v) {

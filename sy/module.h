@@ -1,14 +1,14 @@
-#ifndef __SYLAR_MODULE_H__
-#define __SYLAR_MODULE_H__
+#ifndef __SY_MODULE_H__
+#define __SY_MODULE_H__
 
-#include "sylar/stream.h"
-#include "sylar/singleton.h"
-#include "sylar/mutex.h"
-#include "sylar/rock/rock_stream.h"
+#include "sy/stream.h"
+#include "sy/singleton.h"
+#include "sy/mutex.h"
+#include "sy/rock/rock_stream.h"
 #include <map>
 #include <unordered_map>
 
-namespace sylar {
+namespace sy {
 /**
  * extern "C" {
  * Module* CreateModule() {
@@ -38,17 +38,17 @@ public:
     virtual bool onLoad();
     virtual bool onUnload();
 
-    virtual bool onConnect(sylar::Stream::ptr stream);
-    virtual bool onDisconnect(sylar::Stream::ptr stream);
+    virtual bool onConnect(sy::Stream::ptr stream);
+    virtual bool onDisconnect(sy::Stream::ptr stream);
     
     virtual bool onServerReady();
     virtual bool onServerUp();
 
-    virtual bool handleRequest(sylar::Message::ptr req
-                               ,sylar::Message::ptr rsp
-                               ,sylar::Stream::ptr stream);
-    virtual bool handleNotify(sylar::Message::ptr notify
-                              ,sylar::Stream::ptr stream);
+    virtual bool handleRequest(sy::Message::ptr req
+                               ,sy::Message::ptr rsp
+                               ,sy::Stream::ptr stream);
+    virtual bool handleNotify(sy::Message::ptr notify
+                              ,sy::Stream::ptr stream);
 
     virtual std::string statusString();
 
@@ -78,17 +78,17 @@ public:
                ,const std::string& version
                ,const std::string& filename);
 
-    virtual bool handleRockRequest(sylar::RockRequest::ptr request
-                        ,sylar::RockResponse::ptr response
-                        ,sylar::RockStream::ptr stream) = 0;
-    virtual bool handleRockNotify(sylar::RockNotify::ptr notify
-                        ,sylar::RockStream::ptr stream) = 0;
+    virtual bool handleRockRequest(sy::RockRequest::ptr request
+                        ,sy::RockResponse::ptr response
+                        ,sy::RockStream::ptr stream) = 0;
+    virtual bool handleRockNotify(sy::RockNotify::ptr notify
+                        ,sy::RockStream::ptr stream) = 0;
 
-    virtual bool handleRequest(sylar::Message::ptr req
-                               ,sylar::Message::ptr rsp
-                               ,sylar::Stream::ptr stream);
-    virtual bool handleNotify(sylar::Message::ptr notify
-                              ,sylar::Stream::ptr stream);
+    virtual bool handleRequest(sy::Message::ptr req
+                               ,sy::Message::ptr rsp
+                               ,sy::Stream::ptr stream);
+    virtual bool handleNotify(sy::Message::ptr notify
+                              ,sy::Stream::ptr stream);
 
 };
 
@@ -121,7 +121,7 @@ private:
         ,std::unordered_map<std::string, Module::ptr> > m_type2Modules;
 };
 
-typedef sylar::Singleton<ModuleManager> ModuleMgr;
+typedef sy::Singleton<ModuleManager> ModuleMgr;
 
 }
 

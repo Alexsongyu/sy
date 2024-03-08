@@ -3,10 +3,10 @@
 #include <string.h>
 #include <sstream>
 #include <iostream>
-#include "sylar/log.h"
-#include "sylar/macro.h"
+#include "sy/log.h"
+#include "sy/macro.h"
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 RoaringBitmap::RoaringBitmap(const Roaring& b)
@@ -27,7 +27,7 @@ RoaringBitmap::RoaringBitmap(const RoaringBitmap& b) {
 RoaringBitmap::~RoaringBitmap() {
 }
 
-void RoaringBitmap::writeTo(sylar::ByteArray::ptr ba) const {
+void RoaringBitmap::writeTo(sy::ByteArray::ptr ba) const {
     size_t size = m_bitmap.getSizeInBytes(false);
     ba->writeFuint32(size);
     std::vector<char> buffer(size);
@@ -35,7 +35,7 @@ void RoaringBitmap::writeTo(sylar::ByteArray::ptr ba) const {
     ba->write(buffer.data(), size);
 }
 
-bool RoaringBitmap::readFrom(sylar::ByteArray::ptr ba) {
+bool RoaringBitmap::readFrom(sy::ByteArray::ptr ba) {
     try {
         size_t size = ba->readFuint32();
         std::vector<char> buffer(size);

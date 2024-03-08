@@ -1,7 +1,7 @@
 #include "util.h"
 #include <algorithm>
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 static const uint32_t s_prime_size = 1250;

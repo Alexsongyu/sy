@@ -7,7 +7,7 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
-namespace sylar {
+namespace sy {
 
 #define	ROTL(x, r) ((x << r) | (x >> (32 - r)))
 

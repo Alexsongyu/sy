@@ -2,10 +2,10 @@
 #define __HTTP_WS_SERVLET_H__
 
 #include "ws_session.h"
-#include "sylar/thread.h"
+#include "sy/thread.h"
 #include "servlet.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 class WSServlet : public Servlet {
@@ -16,19 +16,19 @@ public:
     }
     virtual ~WSServlet() {}
 
-    virtual int32_t handle(sylar::http::HttpRequest::ptr request
-                   , sylar::http::HttpResponse::ptr response
-                   , sylar::http::HttpSession::ptr session) override {
+    virtual int32_t handle(sy::http::HttpRequest::ptr request
+                   , sy::http::HttpResponse::ptr response
+                   , sy::http::HttpSession::ptr session) override {
         return 0;
     }
 
-    virtual int32_t onConnect(sylar::http::HttpRequest::ptr header
-                              ,sylar::http::WSSession::ptr session) = 0;
-    virtual int32_t onClose(sylar::http::HttpRequest::ptr header
-                             ,sylar::http::WSSession::ptr session) = 0;
-    virtual int32_t handle(sylar::http::HttpRequest::ptr header
-                           ,sylar::http::WSFrameMessage::ptr msg
-                           ,sylar::http::WSSession::ptr session) = 0;
+    virtual int32_t onConnect(sy::http::HttpRequest::ptr header
+                              ,sy::http::WSSession::ptr session) = 0;
+    virtual int32_t onClose(sy::http::HttpRequest::ptr header
+                             ,sy::http::WSSession::ptr session) = 0;
+    virtual int32_t handle(sy::http::HttpRequest::ptr header
+                           ,sy::http::WSFrameMessage::ptr msg
+                           ,sy::http::WSSession::ptr session) = 0;
     const std::string& getName() const { return m_name;}
 protected:
     std::string m_name;
@@ -37,25 +37,25 @@ protected:
 class FunctionWSServlet : public WSServlet {
 public:
     typedef std::shared_ptr<FunctionWSServlet> ptr;
-    typedef std::function<int32_t (sylar::http::HttpRequest::ptr header
-                              ,sylar::http::WSSession::ptr session)> on_connect_cb;
-    typedef std::function<int32_t (sylar::http::HttpRequest::ptr header
-                             ,sylar::http::WSSession::ptr session)> on_close_cb; 
-    typedef std::function<int32_t (sylar::http::HttpRequest::ptr header
-                           ,sylar::http::WSFrameMessage::ptr msg
-                           ,sylar::http::WSSession::ptr session)> callback;
+    typedef std::function<int32_t (sy::http::HttpRequest::ptr header
+                              ,sy::http::WSSession::ptr session)> on_connect_cb;
+    typedef std::function<int32_t (sy::http::HttpRequest::ptr header
+                             ,sy::http::WSSession::ptr session)> on_close_cb; 
+    typedef std::function<int32_t (sy::http::HttpRequest::ptr header
+                           ,sy::http::WSFrameMessage::ptr msg
+                           ,sy::http::WSSession::ptr session)> callback;
 
     FunctionWSServlet(callback cb
                       ,on_connect_cb connect_cb = nullptr
                       ,on_close_cb close_cb = nullptr);
 
-    virtual int32_t onConnect(sylar::http::HttpRequest::ptr header
-                              ,sylar::http::WSSession::ptr session) override;
-    virtual int32_t onClose(sylar::http::HttpRequest::ptr header
-                             ,sylar::http::WSSession::ptr session) override;
-    virtual int32_t handle(sylar::http::HttpRequest::ptr header
-                           ,sylar::http::WSFrameMessage::ptr msg
-                           ,sylar::http::WSSession::ptr session) override;
+    virtual int32_t onConnect(sy::http::HttpRequest::ptr header
+                              ,sy::http::WSSession::ptr session) override;
+    virtual int32_t onClose(sy::http::HttpRequest::ptr header
+                             ,sy::http::WSSession::ptr session) override;
+    virtual int32_t handle(sy::http::HttpRequest::ptr header
+                           ,sy::http::WSFrameMessage::ptr msg
+                           ,sy::http::WSSession::ptr session) override;
 protected:
     callback m_callback;
     on_connect_cb m_onConnect;

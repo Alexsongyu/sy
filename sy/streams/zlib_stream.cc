@@ -1,7 +1,7 @@
 #include "zlib_stream.h"
-#include "sylar/macro.h"
+#include "sy/macro.h"
 
-namespace sylar {
+namespace sy {
 
 ZlibStream::ptr ZlibStream::CreateGzip(bool encode, uint32_t buff_size) {
     return Create(encode, buff_size, GZIP);
@@ -79,9 +79,9 @@ void ZlibStream::close() {
 
 int ZlibStream::init(Type type, int level, int window_bits
                     ,int memlevel, Strategy strategy) {
-    SYLAR_ASSERT((level >= 0 && level <= 9) || level == DEFAULT_COMPRESSION);
-    SYLAR_ASSERT((window_bits >= 8 && window_bits <= 15));
-    SYLAR_ASSERT((memlevel >= 1 && memlevel <= 9));
+    SY_ASSERT((level >= 0 && level <= 9) || level == DEFAULT_COMPRESSION);
+    SY_ASSERT((window_bits >= 8 && window_bits <= 15));
+    SY_ASSERT((memlevel >= 1 && memlevel <= 9));
 
     memset(&m_zstream, 0, sizeof(m_zstream));
 
@@ -204,8 +204,8 @@ std::string ZlibStream::getResult() const {
     return rt;
 }
 
-sylar::ByteArray::ptr ZlibStream::getByteArray() {
-    sylar::ByteArray::ptr ba(new sylar::ByteArray);
+sy::ByteArray::ptr ZlibStream::getByteArray() {
+    sy::ByteArray::ptr ba(new sy::ByteArray);
     for(auto& i : m_buffs) {
         ba->write(i.iov_base, i.iov_len);
     }

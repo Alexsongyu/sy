@@ -1,5 +1,5 @@
-#ifndef __SYLAR_DB_REDIS_H__
-#define __SYLAR_DB_REDIS_H__
+#ifndef __SY_DB_REDIS_H__
+#define __SY_DB_REDIS_H__
 
 #include <stdlib.h>
 #include <hiredis-vip/hiredis.h>
@@ -8,11 +8,11 @@
 #include <sys/time.h>
 #include <string>
 #include <memory>
-#include "sylar/mutex.h"
-#include "sylar/db/fox_thread.h"
-#include "sylar/singleton.h"
+#include "sy/mutex.h"
+#include "sy/db/fox_thread.h"
+#include "sy/singleton.h"
 
-namespace sylar {
+namespace sy {
 
 typedef std::shared_ptr<redisReply> ReplyPtr;
 
@@ -143,7 +143,7 @@ public:
         INIT_ERR = 6
     };
 
-    FoxRedis(sylar::FoxThread* thr, const std::map<std::string, std::string>& conf);
+    FoxRedis(sy::FoxThread* thr, const std::map<std::string, std::string>& conf);
     ~FoxRedis();
 
     virtual ReplyPtr cmd(const char* fmt, ...);
@@ -157,8 +157,8 @@ private:
 private:
     struct FCtx {
         std::string cmd;
-        sylar::Scheduler* scheduler;
-        sylar::Fiber::ptr fiber;
+        sy::Scheduler* scheduler;
+        sy::Fiber::ptr fiber;
         ReplyPtr rpy;
     };
 
@@ -171,8 +171,8 @@ private:
         std::string cmd;
         FCtx* fctx;
         //std::vector<std::string> parts;
-        //sylar::Scheduler* scheduler;
-        //sylar::Fiber::ptr fiber;
+        //sy::Scheduler* scheduler;
+        //sy::Fiber::ptr fiber;
         //ReplyPtr rpy;
         FoxThread* thread;
 
@@ -194,7 +194,7 @@ private:
     static void CmdCb(redisAsyncContext *c, void *r, void *privdata);
     static void TimeCb(int fd, short event, void* d);
 private:
-    sylar::FoxThread* m_thread;
+    sy::FoxThread* m_thread;
     std::shared_ptr<redisAsyncContext> m_context;
     std::string m_host;
     uint16_t m_port;
@@ -224,7 +224,7 @@ public:
         INIT_ERR = 6
     };
 
-    FoxRedisCluster(sylar::FoxThread* thr, const std::map<std::string, std::string>& conf);
+    FoxRedisCluster(sy::FoxThread* thr, const std::map<std::string, std::string>& conf);
     ~FoxRedisCluster();
 
     virtual ReplyPtr cmd(const char* fmt, ...);
@@ -237,8 +237,8 @@ public:
 private:
     struct FCtx {
         std::string cmd;
-        sylar::Scheduler* scheduler;
-        sylar::Fiber::ptr fiber;
+        sy::Scheduler* scheduler;
+        sy::Fiber::ptr fiber;
         ReplyPtr rpy;
     };
     struct Ctx {
@@ -254,7 +254,7 @@ private:
         //int cancel_count;
         //int destory;
         //int callback_count;
-        //sylar::RWMutex mutex;
+        //sy::RWMutex mutex;
 
         //Ctx::ptr ref;
         //Ctx::ptr tref;
@@ -276,7 +276,7 @@ private:
     static void CmdCb(redisClusterAsyncContext*c, void *r, void *privdata);
     static void TimeCb(int fd, short event, void* d);
 private:
-    sylar::FoxThread* m_thread;
+    sy::FoxThread* m_thread;
     std::shared_ptr<redisClusterAsyncContext> m_context;
     std::string m_host;
     STATUS m_status;
@@ -297,12 +297,12 @@ private:
     void freeRedis(IRedis* r);
     void init();
 private:
-    sylar::RWMutex m_mutex;
+    sy::RWMutex m_mutex;
     std::map<std::string, std::list<IRedis*> > m_datas;
     std::map<std::string, std::map<std::string, std::string> > m_config;
 };
 
-typedef sylar::Singleton<RedisManager> RedisMgr;
+typedef sy::Singleton<RedisManager> RedisMgr;
 
 class RedisUtil {
 public:

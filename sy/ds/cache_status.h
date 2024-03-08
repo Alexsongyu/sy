@@ -1,12 +1,12 @@
-#ifndef __SYLAR_DS_CACHE_STATUS_H__
-#define __SYLAR_DS_CACHE_STATUS_H__
+#ifndef __SY_DS_CACHE_STATUS_H__
+#define __SY_DS_CACHE_STATUS_H__
 
 #include <sstream>
 #include <string>
 #include <stdint.h>
-#include "sylar/util.h"
+#include "sy/util.h"
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 class CacheStatus {

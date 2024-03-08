@@ -1,5 +1,5 @@
-#ifndef __SYLAR_DS_LRU_CACHE_H__
-#define __SYLAR_DS_LRU_CACHE_H__
+#ifndef __SY_DS_LRU_CACHE_H__
+#define __SY_DS_LRU_CACHE_H__
 
 #include <algorithm>
 #include <list>
@@ -8,12 +8,12 @@
 #include <atomic>
 #include <sstream>
 #include "cache_status.h"
-#include "sylar/mutex.h"
+#include "sy/mutex.h"
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
-template<class K, class V, class MutexType = sylar::Mutex>
+template<class K, class V, class MutexType = sy::Mutex>
 class LruCache {
 public:
     typedef std::shared_ptr<LruCache> ptr;
@@ -182,7 +182,7 @@ private:
     bool m_statusOwner = false;
 };
 
-template<class K, class V, class MutexType = sylar::Mutex, class Hash = std::hash<K> >
+template<class K, class V, class MutexType = sy::Mutex, class Hash = std::hash<K> >
 class HashLruCache {
 public:
     typedef std::shared_ptr<HashLruCache> ptr;

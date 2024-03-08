@@ -15,8 +15,10 @@
 #include "singleton.h"
 #include "thread.h"
 
-// 记录不同 level 的日志
-// 使用流式方式将 指定level日志 写入到logger
+// 定义宏记录不同级别的日志
+
+// 使用流的方式将 指定level的 LogEvent 写入到logger
+// 通过使用 LogEventWrap 类对 LogEvent 智能指针进行包装，可以在宏定义的作用域结束时自动触发析构函数，立即释放 LogEvent 对象，从而确保日志事件能够正确写入到日志器中
 #define SY_LOG_LEVEL(logger, level)                                                                         \
     if (logger->getLevel() <= level)                                                                        \
     sy::LogEventWrap(sy::LogEvent::ptr(new sy::LogEvent(logger, level,                                      \
@@ -30,7 +32,7 @@
 #define SY_LOG_ERROR(logger) SY_LOG_LEVEL(logger, sy::LogLevel::ERROR)
 #define SY_LOG_FATAL(logger) SY_LOG_LEVEL(logger, sy::LogLevel::FATAL)
 
-// 使用格式化方式将 指定level的格式化日志 写入到logger
+// 使用格式化方式将 指定level的 LogEvent 写入到logger
 #define SY_LOG_FMT_LEVEL(logger, level, fmt, ...)                                                           \
     if (logger->getLevel() <= level)                                                                        \
     sy::LogEventWrap(sy::LogEvent::ptr(new sy::LogEvent(logger, level,                                      \
@@ -48,7 +50,7 @@
 // 获取主日志器
 #define SY_LOG_ROOT() sy::LoggerMgr::GetInstance()->getRoot()
 
-// 获取name的日志器
+// 获取相应name的日志器
 #define SY_LOG_NAME(name) sy::LoggerMgr::GetInstance()->getLogger(name)
 
 // 定义类，防止别人和这里面的 类、变量、函数重名
@@ -74,7 +76,6 @@ namespace sy
 
         // 将日志级别 level 转换为文本输出
         static const char *ToString(LogLevel::Level level);
-
         // 将日志级别文本 str 转换为日志级别
         static LogLevel::Level FromString(const std::string &str);
     };
@@ -86,6 +87,7 @@ namespace sy
         typedef std::shared_ptr<LogEvent> ptr;
         LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char *file, int32_t line, uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time, const std::string &thread_name);
 
+        // 成员变量
         // 返回文件名
         const char *getFile() const { return m_file; }
         // 返回行号
@@ -168,7 +170,7 @@ namespace sy
         std::ostream &format(std::ostream &ofs, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
 
     private:
-        // 子类：日志内容项格式化
+        // 子类：格式项
         class FormatItem
         {
         public:
@@ -184,10 +186,10 @@ namespace sy
     private:
         std::string m_pattern;
         std::vector<FormatItem::ptr> m_items; // 日志格式解析后的格式
-        bool m_error = false;
+        bool m_error = false; // 判断日志格式错误
     };
 
-    // 日志输出地点
+    // 日志输出目标
     class LogAppender
     {
         friend class Logger;
@@ -280,7 +282,8 @@ namespace sy
         Logger::ptr m_root;
     };
 
-    // 输出到控制台的 Appender
+    // 向控制台输出日志
+    // 重写纯虚函数log实现写入日志，重写纯虚函数toYamlString实现将日志转化为YAML格式的字符串
     class StdoutLogAppender : public LogAppender
     {
     public:
@@ -289,7 +292,7 @@ namespace sy
         std::string toYamlString() override;
     };
 
-    // 输出到文件的 Appender
+    // 向文件输出日志
     class FileLogAppender : public LogAppender
     {
     public:
@@ -302,7 +305,7 @@ namespace sy
     private:
         std::string m_filename;     // 文件路径
         std::ofstream m_filestream; // 文件流
-        uint64_t m_lastTime = 0;    // 上次重新打开的时间
+        uint64_t m_lastTime = 0;    // 上次重新打开的时间，每秒reopen一次，判断文件有没有被删
     };
 
     // 日志器管理类
@@ -318,12 +321,13 @@ namespace sy
 
     private:
         MutexType m_mutex;
-        std::map<std::string, Logger::ptr> m_loggers;
-        Logger::ptr m_root;
+        std::map<std::string, Logger::ptr> m_loggers;// 日志器容器
+        Logger::ptr m_root; // 主日志器 
     };
 
-    // 日志器管理类单例模式
-    typedef sylar::Singleton<LoggerManager> LoggerMgr;
+    // LoggerManager类采用单例模式实现
+    // LoggerMgr是LoggerManager类的单例对象，通过这个单例对象可以全局访问 LoggerManager 的功能，确保在整个程序中只有一个 LoggerManager 实例存在
+    typedef sy::Singleton<LoggerManager> LoggerMgr;
 }
 
 #endif

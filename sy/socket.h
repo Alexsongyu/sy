@@ -1,13 +1,13 @@
 /**
  * @file socket.h
  * @brief Socket封装
- * @author sylar.yin
+ * @author sy.yin
  * @email 564628276@qq.com
  * @date 2019-06-05
- * @copyright Copyright (c) 2019年 sylar.yin All rights reserved (www.sylar.top)
+ * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
  */
-#ifndef __SYLAR_SOCKET_H__
-#define __SYLAR_SOCKET_H__
+#ifndef __SY_SOCKET_H__
+#define __SY_SOCKET_H__
 
 #include <memory>
 #include <netinet/tcp.h>
@@ -18,7 +18,7 @@
 #include "address.h"
 #include "noncopyable.h"
 
-namespace sylar {
+namespace sy {
 
 /**
  * @brief Socket封装类
@@ -54,13 +54,13 @@ public:
      * @brief 创建TCP Socket(满足地址类型)
      * @param[in] address 地址
      */
-    static Socket::ptr CreateTCP(sylar::Address::ptr address);
+    static Socket::ptr CreateTCP(sy::Address::ptr address);
 
     /**
      * @brief 创建UDP Socket(满足地址类型)
      * @param[in] address 地址
      */
-    static Socket::ptr CreateUDP(sylar::Address::ptr address);
+    static Socket::ptr CreateUDP(sy::Address::ptr address);
 
     /**
      * @brief 创建IPv4的TCP Socket
@@ -395,7 +395,7 @@ class SSLSocket : public Socket {
 public:
     typedef std::shared_ptr<SSLSocket> ptr;
 
-    static SSLSocket::ptr CreateTCP(sylar::Address::ptr address);
+    static SSLSocket::ptr CreateTCP(sy::Address::ptr address);
     static SSLSocket::ptr CreateTCPSocket();
     static SSLSocket::ptr CreateTCPSocket6();
 

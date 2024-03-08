@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace sylar {
+namespace sy {
 
 FdCtx::FdCtx(int fd)
     :m_isInit(false)

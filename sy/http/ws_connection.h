@@ -1,10 +1,10 @@
-#ifndef __SYLAR_HTTP_WS_CONNECTION_H__
-#define __SYLAR_HTTP_WS_CONNECTION_H__
+#ifndef __SY_HTTP_WS_CONNECTION_H__
+#define __SY_HTTP_WS_CONNECTION_H__
 
-#include "sylar/http/http_connection.h"
-#include "sylar/http/ws_session.h"
+#include "sy/http/http_connection.h"
+#include "sy/http/ws_session.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 class WSConnection : public HttpConnection {

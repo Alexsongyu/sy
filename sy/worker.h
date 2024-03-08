@@ -1,21 +1,21 @@
-#ifndef __SYLAR_WORKER_H__
-#define __SYLAR_WORKER_H__
+#ifndef __SY_WORKER_H__
+#define __SY_WORKER_H__
 
 #include "mutex.h"
 #include "singleton.h"
 #include "log.h"
 #include "iomanager.h"
 
-namespace sylar {
+namespace sy {
 
 class WorkerGroup : Noncopyable, public std::enable_shared_from_this<WorkerGroup> {
 public:
     typedef std::shared_ptr<WorkerGroup> ptr;
-    static WorkerGroup::ptr Create(uint32_t batch_size, sylar::Scheduler* s = sylar::Scheduler::GetThis()) {
+    static WorkerGroup::ptr Create(uint32_t batch_size, sy::Scheduler* s = sy::Scheduler::GetThis()) {
         return std::make_shared<WorkerGroup>(batch_size, s);
     }
 
-    WorkerGroup(uint32_t batch_size, sylar::Scheduler* s = sylar::Scheduler::GetThis());
+    WorkerGroup(uint32_t batch_size, sy::Scheduler* s = sy::Scheduler::GetThis());
     ~WorkerGroup();
 
     void schedule(std::function<void()> cb, int thread = -1);
@@ -42,8 +42,8 @@ public:
         if(s) {
             s->schedule(fc, thread);
         } else {
-            static sylar::Logger::ptr s_logger = SYLAR_LOG_NAME("system");
-            SYLAR_LOG_ERROR(s_logger) << "schedule name=" << name
+            static sy::Logger::ptr s_logger = SY_LOG_NAME("system");
+            SY_LOG_ERROR(s_logger) << "schedule name=" << name
                 << " not exists";
         }
     }
@@ -54,8 +54,8 @@ public:
         if(s) {
             s->schedule(begin, end);
         } else {
-            static sylar::Logger::ptr s_logger = SYLAR_LOG_NAME("system");
-            SYLAR_LOG_ERROR(s_logger) << "schedule name=" << name
+            static sy::Logger::ptr s_logger = SY_LOG_NAME("system");
+            SY_LOG_ERROR(s_logger) << "schedule name=" << name
                 << " not exists";
         }
     }
@@ -73,7 +73,7 @@ private:
     bool m_stop;
 };
 
-typedef sylar::Singleton<WorkerManager> WorkerMgr;
+typedef sy::Singleton<WorkerManager> WorkerMgr;
 
 }
 

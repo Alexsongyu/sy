@@ -6,16 +6,16 @@
 #include "hook.h"
 #include <limits.h>
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
-Socket::ptr Socket::CreateTCP(sylar::Address::ptr address) {
+Socket::ptr Socket::CreateTCP(sy::Address::ptr address) {
     Socket::ptr sock(new Socket(address->getFamily(), TCP, 0));
     return sock;
 }
 
-Socket::ptr Socket::CreateUDP(sylar::Address::ptr address) {
+Socket::ptr Socket::CreateUDP(sy::Address::ptr address) {
     Socket::ptr sock(new Socket(address->getFamily(), UDP, 0));
     sock->newSock();
     sock->m_isConnected = true;
@@ -97,7 +97,7 @@ void Socket::setRecvTimeout(int64_t v) {
 bool Socket::getOption(int level, int option, void* result, socklen_t* len) {
     int rt = getsockopt(m_sock, level, option, result, (socklen_t*)len);
     if(rt) {
-        SYLAR_LOG_DEBUG(g_logger) << "getOption sock=" << m_sock
+        SY_LOG_DEBUG(g_logger) << "getOption sock=" << m_sock
             << " level=" << level << " option=" << option
             << " errno=" << errno << " errstr=" << strerror(errno);
         return false;
@@ -107,7 +107,7 @@ bool Socket::getOption(int level, int option, void* result, socklen_t* len) {
 
 bool Socket::setOption(int level, int option, const void* result, socklen_t len) {
     if(setsockopt(m_sock, level, option, result, (socklen_t)len)) {
-        SYLAR_LOG_DEBUG(g_logger) << "setOption sock=" << m_sock
+        SY_LOG_DEBUG(g_logger) << "setOption sock=" << m_sock
             << " level=" << level << " option=" << option
             << " errno=" << errno << " errstr=" << strerror(errno);
         return false;
@@ -119,7 +119,7 @@ Socket::ptr Socket::accept() {
     Socket::ptr sock(new Socket(m_family, m_type, m_protocol));
     int newsock = ::accept(m_sock, nullptr, nullptr);
     if(newsock == -1) {
-        SYLAR_LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
+        SY_LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
             << errno << " errstr=" << strerror(errno);
         return nullptr;
     }
@@ -146,13 +146,13 @@ bool Socket::bind(const Address::ptr addr) {
     //m_localAddress = addr;
     if(!isValid()) {
         newSock();
-        if(SYLAR_UNLIKELY(!isValid())) {
+        if(SY_UNLIKELY(!isValid())) {
             return false;
         }
     }
 
-    if(SYLAR_UNLIKELY(addr->getFamily() != m_family)) {
-        SYLAR_LOG_ERROR(g_logger) << "bind sock.family("
+    if(SY_UNLIKELY(addr->getFamily() != m_family)) {
+        SY_LOG_ERROR(g_logger) << "bind sock.family("
             << m_family << ") addr.family(" << addr->getFamily()
             << ") not equal, addr=" << addr->toString();
         return false;
@@ -164,12 +164,12 @@ bool Socket::bind(const Address::ptr addr) {
         if(sock->connect(uaddr)) {
             return false;
         } else {
-            sylar::FSUtil::Unlink(uaddr->getPath(), true);
+            sy::FSUtil::Unlink(uaddr->getPath(), true);
         }
     }
 
     if(::bind(m_sock, addr->getAddr(), addr->getAddrLen())) {
-        SYLAR_LOG_ERROR(g_logger) << "bind error errrno=" << errno
+        SY_LOG_ERROR(g_logger) << "bind error errrno=" << errno
             << " errstr=" << strerror(errno);
         return false;
     }
@@ -179,7 +179,7 @@ bool Socket::bind(const Address::ptr addr) {
 
 bool Socket::reconnect(uint64_t timeout_ms) {
     if(!m_remoteAddress) {
-        SYLAR_LOG_ERROR(g_logger) << "reconnect m_remoteAddress is null";
+        SY_LOG_ERROR(g_logger) << "reconnect m_remoteAddress is null";
         return false;
     }
     m_localAddress.reset();
@@ -190,13 +190,13 @@ bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
     m_remoteAddress = addr;
     if(!isValid()) {
         newSock();
-        if(SYLAR_UNLIKELY(!isValid())) {
+        if(SY_UNLIKELY(!isValid())) {
             return false;
         }
     }
 
-    if(SYLAR_UNLIKELY(addr->getFamily() != m_family)) {
-        SYLAR_LOG_ERROR(g_logger) << "connect sock.family("
+    if(SY_UNLIKELY(addr->getFamily() != m_family)) {
+        SY_LOG_ERROR(g_logger) << "connect sock.family("
             << m_family << ") addr.family(" << addr->getFamily()
             << ") not equal, addr=" << addr->toString();
         return false;
@@ -204,14 +204,14 @@ bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
 
     if(timeout_ms == (uint64_t)-1) {
         if(::connect(m_sock, addr->getAddr(), addr->getAddrLen())) {
-            SYLAR_LOG_ERROR(g_logger) << "sock=" << m_sock << " connect(" << addr->toString()
+            SY_LOG_ERROR(g_logger) << "sock=" << m_sock << " connect(" << addr->toString()
                 << ") error errno=" << errno << " errstr=" << strerror(errno);
             close();
             return false;
         }
     } else {
         if(::connect_with_timeout(m_sock, addr->getAddr(), addr->getAddrLen(), timeout_ms)) {
-            SYLAR_LOG_ERROR(g_logger) << "sock=" << m_sock << " connect(" << addr->toString()
+            SY_LOG_ERROR(g_logger) << "sock=" << m_sock << " connect(" << addr->toString()
                 << ") timeout=" << timeout_ms << " error errno="
                 << errno << " errstr=" << strerror(errno);
             close();
@@ -226,11 +226,11 @@ bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
 
 bool Socket::listen(int backlog) {
     if(!isValid()) {
-        SYLAR_LOG_ERROR(g_logger) << "listen error sock=-1";
+        SY_LOG_ERROR(g_logger) << "listen error sock=-1";
         return false;
     }
     if(::listen(m_sock, backlog)) {
-        SYLAR_LOG_ERROR(g_logger) << "listen error errno=" << errno
+        SY_LOG_ERROR(g_logger) << "listen error errno=" << errno
             << " errstr=" << strerror(errno);
         return false;
     }
@@ -348,7 +348,7 @@ Address::ptr Socket::getRemoteAddress() {
     }
     socklen_t addrlen = result->getAddrLen();
     if(getpeername(m_sock, result->getAddr(), &addrlen)) {
-        //SYLAR_LOG_ERROR(g_logger) << "getpeername error sock=" << m_sock
+        //SY_LOG_ERROR(g_logger) << "getpeername error sock=" << m_sock
         //    << " errno=" << errno << " errstr=" << strerror(errno);
         return Address::ptr(new UnknownAddress(m_family));
     }
@@ -382,7 +382,7 @@ Address::ptr Socket::getLocalAddress() {
     }
     socklen_t addrlen = result->getAddrLen();
     if(getsockname(m_sock, result->getAddr(), &addrlen)) {
-        SYLAR_LOG_ERROR(g_logger) << "getsockname error sock=" << m_sock
+        SY_LOG_ERROR(g_logger) << "getsockname error sock=" << m_sock
             << " errno=" << errno << " errstr=" << strerror(errno);
         return Address::ptr(new UnknownAddress(m_family));
     }
@@ -430,15 +430,15 @@ std::string Socket::toString() const {
 }
 
 bool Socket::cancelRead() {
-    return IOManager::GetThis()->cancelEvent(m_sock, sylar::IOManager::READ);
+    return IOManager::GetThis()->cancelEvent(m_sock, sy::IOManager::READ);
 }
 
 bool Socket::cancelWrite() {
-    return IOManager::GetThis()->cancelEvent(m_sock, sylar::IOManager::WRITE);
+    return IOManager::GetThis()->cancelEvent(m_sock, sy::IOManager::WRITE);
 }
 
 bool Socket::cancelAccept() {
-    return IOManager::GetThis()->cancelEvent(m_sock, sylar::IOManager::READ);
+    return IOManager::GetThis()->cancelEvent(m_sock, sy::IOManager::READ);
 }
 
 bool Socket::cancelAll() {
@@ -455,10 +455,10 @@ void Socket::initSock() {
 
 void Socket::newSock() {
     m_sock = socket(m_family, m_type, m_protocol);
-    if(SYLAR_LIKELY(m_sock != -1)) {
+    if(SY_LIKELY(m_sock != -1)) {
         initSock();
     } else {
-        SYLAR_LOG_ERROR(g_logger) << "socket(" << m_family
+        SY_LOG_ERROR(g_logger) << "socket(" << m_family
             << ", " << m_type << ", " << m_protocol << ") errno="
             << errno << " errstr=" << strerror(errno);
     }
@@ -486,7 +486,7 @@ Socket::ptr SSLSocket::accept() {
     SSLSocket::ptr sock(new SSLSocket(m_family, m_type, m_protocol));
     int newsock = ::accept(m_sock, nullptr, nullptr);
     if(newsock == -1) {
-        SYLAR_LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
+        SY_LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
             << errno << " errstr=" << strerror(errno);
         return nullptr;
     }
@@ -546,12 +546,12 @@ int SSLSocket::send(const iovec* buffers, size_t length, int flags) {
 }
 
 int SSLSocket::sendTo(const void* buffer, size_t length, const Address::ptr to, int flags) {
-    SYLAR_ASSERT(false);
+    SY_ASSERT(false);
     return -1;
 }
 
 int SSLSocket::sendTo(const iovec* buffers, size_t length, const Address::ptr to, int flags) {
-    SYLAR_ASSERT(false);
+    SY_ASSERT(false);
     return -1;
 }
 
@@ -581,12 +581,12 @@ int SSLSocket::recv(iovec* buffers, size_t length, int flags) {
 }
 
 int SSLSocket::recvFrom(void* buffer, size_t length, Address::ptr from, int flags) {
-    SYLAR_ASSERT(false);
+    SY_ASSERT(false);
     return -1;
 }
 
 int SSLSocket::recvFrom(iovec* buffers, size_t length, Address::ptr from, int flags) {
-    SYLAR_ASSERT(false);
+    SY_ASSERT(false);
     return -1;
 }
 
@@ -603,24 +603,24 @@ bool SSLSocket::init(int sock) {
 bool SSLSocket::loadCertificates(const std::string& cert_file, const std::string& key_file) {
     m_ctx.reset(SSL_CTX_new(SSLv23_server_method()), SSL_CTX_free);
     if(SSL_CTX_use_certificate_chain_file(m_ctx.get(), cert_file.c_str()) != 1) {
-        SYLAR_LOG_ERROR(g_logger) << "SSL_CTX_use_certificate_chain_file("
+        SY_LOG_ERROR(g_logger) << "SSL_CTX_use_certificate_chain_file("
             << cert_file << ") error";
         return false;
     }
     if(SSL_CTX_use_PrivateKey_file(m_ctx.get(), key_file.c_str(), SSL_FILETYPE_PEM) != 1) {
-        SYLAR_LOG_ERROR(g_logger) << "SSL_CTX_use_PrivateKey_file("
+        SY_LOG_ERROR(g_logger) << "SSL_CTX_use_PrivateKey_file("
             << key_file << ") error";
         return false;
     }
     if(SSL_CTX_check_private_key(m_ctx.get()) != 1) {
-        SYLAR_LOG_ERROR(g_logger) << "SSL_CTX_check_private_key cert_file="
+        SY_LOG_ERROR(g_logger) << "SSL_CTX_check_private_key cert_file="
             << cert_file << " key_file=" << key_file;
         return false;
     }
     return true;
 }
 
-SSLSocket::ptr SSLSocket::CreateTCP(sylar::Address::ptr address) {
+SSLSocket::ptr SSLSocket::CreateTCP(sy::Address::ptr address) {
     SSLSocket::ptr sock(new SSLSocket(address->getFamily(), TCP, 0));
     return sock;
 }

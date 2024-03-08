@@ -1,10 +1,10 @@
-#ifndef __SYLAR_DB_DB_H__
-#define __SYLAR_DB_DB_H__
+#ifndef __SY_DB_DB_H__
+#define __SY_DB_DB_H__
 
 #include <memory>
 #include <string>
 
-namespace sylar {
+namespace sy {
 
 class ISQLData {
 public:

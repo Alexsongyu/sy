@@ -1,15 +1,15 @@
-#ifndef __SYLAR_NS_NS_PROTOCOL_H__
-#define __SYLAR_NS_NS_PROTOCOL_H__
+#ifndef __SY_NS_NS_PROTOCOL_H__
+#define __SY_NS_NS_PROTOCOL_H__
 
 #include <memory>
 #include <string>
 #include <map>
 #include <iostream>
 #include <stdint.h>
-#include "sylar/mutex.h"
+#include "sy/mutex.h"
 #include "ns_protobuf.pb.h"
 
-namespace sylar {
+namespace sy {
 namespace ns {
 
 enum class NSCommand {
@@ -73,7 +73,7 @@ public:
 
     size_t size();
 private:
-    sylar::RWMutex m_mutex;
+    sy::RWMutex m_mutex;
     uint32_t m_cmd;
     std::map<uint64_t, NSNode::ptr> m_datas;
 };
@@ -99,7 +99,7 @@ public:
     size_t size();
 private:
     std::string m_domain;
-    sylar::RWMutex m_mutex;
+    sy::RWMutex m_mutex;
     std::map<uint32_t, NSNodeSet::ptr> m_datas;
 };
 
@@ -119,7 +119,7 @@ public:
 
     void swap(NSDomainSet& ds);
 private:
-    sylar::RWMutex m_mutex;
+    sy::RWMutex m_mutex;
     std::map<std::string, NSDomain::ptr> m_datas;
 };
 

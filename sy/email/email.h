@@ -1,12 +1,12 @@
-#ifndef __SYLAR_EMAIL_EMAIL_H__
-#define __SYLAR_EMAIL_EMAIL_H__
+#ifndef __SY_EMAIL_EMAIL_H__
+#define __SY_EMAIL_EMAIL_H__
 
 #include <memory>
 #include <string>
 #include <vector>
 #include <map>
 
-namespace sylar {
+namespace sy {
 
 class EMailEntity {
 public:

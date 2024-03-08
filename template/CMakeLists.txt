@@ -1,21 +1,21 @@
 cmake_minimum_required(VERSION 2.8)
 project(project_name)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sylar)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sy)
 
-include (sylar/cmake/utils.cmake)
+include (sy/cmake/utils.cmake)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O0 -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 
 include_directories(.)
-include_directories(/apps/sylar/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sylar)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sylar/thirdpart)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sylar/thirdpart)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sylar/thirdpart/yaml-cpp/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sylar/thirdpart/jsoncpp-1.8.4/include)
-link_directories(/apps/sylar/lib)
+include_directories(/apps/sy/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sy)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sy/thirdpart)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sy/thirdpart)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sy/thirdpart/yaml-cpp/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sy/thirdpart/jsoncpp-1.8.4/include)
+link_directories(/apps/sy/lib)
 
 find_package(Boost REQUIRED)
 if(Boost_FOUND)
@@ -35,7 +35,7 @@ set(LIB_SRC
         template/my_module.cc
     )
 
-#PROTOBUF_GENERATE_CPP(PB_SRCS PB_HDRS sylar/test.proto)
+#PROTOBUF_GENERATE_CPP(PB_SRCS PB_HDRS sy/test.proto)
 #list(APPEND LIB_SRC ${PB_SRCS})
 #
 #message(STATUS ${LIB_SRC})

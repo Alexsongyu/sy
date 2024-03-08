@@ -1,13 +1,13 @@
 /**
  * @file http.h
  * @brief HTTP定义结构体封装
- * @author sylar.yin
+ * @author sy.yin
  * @email 564628276@qq.com
  * @date 2019-06-07
- * @copyright Copyright (c) 2019年 sylar.yin All rights reserved (www.sylar.top)
+ * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
  */
-#ifndef __SYLAR_HTTP_HTTP_H__
-#define __SYLAR_HTTP_HTTP_H__
+#ifndef __SY_HTTP_HTTP_H__
+#define __SY_HTTP_HTTP_H__
 
 #include <memory>
 #include <string>
@@ -17,7 +17,7 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 /* Request Methods */

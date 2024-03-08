@@ -1,22 +1,22 @@
 #include "rock_server.h"
-#include "sylar/log.h"
-#include "sylar/module.h"
+#include "sy/log.h"
+#include "sy/module.h"
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
 RockServer::RockServer(const std::string& type
-                       ,sylar::IOManager* worker
-                       ,sylar::IOManager* io_worker
-                       ,sylar::IOManager* accept_worker)
+                       ,sy::IOManager* worker
+                       ,sy::IOManager* io_worker
+                       ,sy::IOManager* accept_worker)
     :TcpServer(worker, io_worker, accept_worker) {
     m_type = type;
 }
 
 void RockServer::handleClient(Socket::ptr client) {
-    SYLAR_LOG_DEBUG(g_logger) << "handleClient " << *client;
-    sylar::RockSession::ptr session(new sylar::RockSession(client));
+    SY_LOG_DEBUG(g_logger) << "handleClient " << *client;
+    sy::RockSession::ptr session(new sy::RockSession(client));
     session->setWorker(m_worker);
     ModuleMgr::GetInstance()->foreach(Module::ROCK,
             [session](Module::ptr m) {
@@ -31,10 +31,10 @@ void RockServer::handleClient(Socket::ptr client) {
         }
     );
     session->setRequestHandler(
-        [](sylar::RockRequest::ptr req
-           ,sylar::RockResponse::ptr rsp
-           ,sylar::RockStream::ptr conn)->bool {
-            //SYLAR_LOG_INFO(g_logger) << "handleReq " << req->toString()
+        [](sy::RockRequest::ptr req
+           ,sy::RockResponse::ptr rsp
+           ,sy::RockStream::ptr conn)->bool {
+            //SY_LOG_INFO(g_logger) << "handleReq " << req->toString()
             //                         << " body=" << req->getBody();
             bool rt = false;
             ModuleMgr::GetInstance()->foreach(Module::ROCK,
@@ -48,9 +48,9 @@ void RockServer::handleClient(Socket::ptr client) {
         }
     ); 
     session->setNotifyHandler(
-        [](sylar::RockNotify::ptr nty
-           ,sylar::RockStream::ptr conn)->bool {
-            SYLAR_LOG_INFO(g_logger) << "handleNty " << nty->toString()
+        [](sy::RockNotify::ptr nty
+           ,sy::RockStream::ptr conn)->bool {
+            SY_LOG_INFO(g_logger) << "handleNty " << nty->toString()
                                      << " body=" << nty->getBody();
             bool rt = false;
             ModuleMgr::GetInstance()->foreach(Module::ROCK,

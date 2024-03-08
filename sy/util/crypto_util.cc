@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 
-namespace sylar {
+namespace sy {
 
 namespace {
 

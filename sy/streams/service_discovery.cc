@@ -1,12 +1,12 @@
 #include "service_discovery.h"
-#include "sylar/log.h"
+#include "sy/log.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
 ServiceItemInfo::ptr ServiceItemInfo::Create(const std::string& ip_and_port, const std::string& data) {
     auto pos = ip_and_port.find(':');
@@ -14,7 +14,7 @@ ServiceItemInfo::ptr ServiceItemInfo::Create(const std::string& ip_and_port, con
         return nullptr;
     }
     auto ip = ip_and_port.substr(0, pos);
-    auto port = sylar::TypeUtil::Atoi(ip_and_port.substr(pos + 1));
+    auto port = sy::TypeUtil::Atoi(ip_and_port.substr(pos + 1));
     in_addr_t ip_addr = inet_addr(ip.c_str());
     if(ip_addr == 0) {
         return nullptr;
@@ -39,36 +39,36 @@ std::string ServiceItemInfo::toString() const {
 }
 
 void IServiceDiscovery::setQueryServer(const std::unordered_map<std::string, std::unordered_set<std::string> >& v) {
-    sylar::RWMutex::WriteLock lock(m_mutex);
+    sy::RWMutex::WriteLock lock(m_mutex);
     m_queryInfos = v;
 }
 
 void IServiceDiscovery::registerServer(const std::string& domain, const std::string& service,
                                        const std::string& ip_and_port, const std::string& data) {
-    sylar::RWMutex::WriteLock lock(m_mutex);
+    sy::RWMutex::WriteLock lock(m_mutex);
     m_registerInfos[domain][service][ip_and_port] = data;
 }
 
 void IServiceDiscovery::queryServer(const std::string& domain, const std::string& service) {
-    sylar::RWMutex::WriteLock lock(m_mutex);
+    sy::RWMutex::WriteLock lock(m_mutex);
     m_queryInfos[domain].insert(service);
 }
 
 void IServiceDiscovery::listServer(std::unordered_map<std::string, std::unordered_map<std::string
                                    ,std::unordered_map<uint64_t, ServiceItemInfo::ptr> > >& infos) {
-    sylar::RWMutex::ReadLock lock(m_mutex);
+    sy::RWMutex::ReadLock lock(m_mutex);
     infos = m_datas;
 }
 
 void IServiceDiscovery::listRegisterServer(std::unordered_map<std::string, std::unordered_map<std::string
                                            ,std::unordered_map<std::string, std::string> > >& infos) {
-    sylar::RWMutex::ReadLock lock(m_mutex);
+    sy::RWMutex::ReadLock lock(m_mutex);
     infos = m_registerInfos;
 }
 
 void IServiceDiscovery::listQueryServer(std::unordered_map<std::string
                                         ,std::unordered_set<std::string> >& infos) {
-    sylar::RWMutex::ReadLock lock(m_mutex);
+    sy::RWMutex::ReadLock lock(m_mutex);
     infos = m_queryInfos;
 }
 
@@ -81,14 +81,14 @@ void ZKServiceDiscovery::start() {
         return;
     }
     auto self = shared_from_this();
-    m_client.reset(new sylar::ZKClient);
+    m_client.reset(new sy::ZKClient);
     bool b = m_client->init(m_hosts, 6000, std::bind(&ZKServiceDiscovery::onWatch,
                 self, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4));
     if(!b) {
-        SYLAR_LOG_ERROR(g_logger) << "ZKClient init fail, hosts=" << m_hosts;
+        SY_LOG_ERROR(g_logger) << "ZKClient init fail, hosts=" << m_hosts;
     }
-    m_timer = sylar::IOManager::GetThis()->addTimer(60 * 1000, [self, this](){
+    m_timer = sy::IOManager::GetThis()->addTimer(60 * 1000, [self, this](){
         m_isOnTimer = true;
         onZKConnect("", m_client);
         m_isOnTimer = false;
@@ -107,7 +107,7 @@ void ZKServiceDiscovery::stop() {
 }
 
 void ZKServiceDiscovery::onZKConnect(const std::string& path, ZKClient::ptr client) {
-    sylar::RWMutex::ReadLock lock(m_mutex);
+    sy::RWMutex::ReadLock lock(m_mutex);
     auto rinfo = m_registerInfos;
     auto qinfo = m_queryInfos;
     lock.unlock();
@@ -122,7 +122,7 @@ void ZKServiceDiscovery::onZKConnect(const std::string& path, ZKClient::ptr clie
     }
 
     if(!ok) {
-        SYLAR_LOG_ERROR(g_logger) << "onZKConnect register fail";
+        SY_LOG_ERROR(g_logger) << "onZKConnect register fail";
     }
 
     ok = true;
@@ -132,7 +132,7 @@ void ZKServiceDiscovery::onZKConnect(const std::string& path, ZKClient::ptr clie
         }
     }
     if(!ok) {
-        SYLAR_LOG_ERROR(g_logger) << "onZKConnect query fail";
+        SY_LOG_ERROR(g_logger) << "onZKConnect query fail";
     }
 
     ok = true;
@@ -143,7 +143,7 @@ void ZKServiceDiscovery::onZKConnect(const std::string& path, ZKClient::ptr clie
     }
 
     if(!ok) {
-        SYLAR_LOG_ERROR(g_logger) << "onZKConnect queryData fail";
+        SY_LOG_ERROR(g_logger) << "onZKConnect queryData fail";
     }
 }
 
@@ -154,14 +154,14 @@ bool ZKServiceDiscovery::existsOrCreate(const std::string& path) {
     } else {
         auto pos = path.find_last_of('/');
         if(pos == std::string::npos) {
-            SYLAR_LOG_ERROR(g_logger) << "existsOrCreate invalid path=" << path;
+            SY_LOG_ERROR(g_logger) << "existsOrCreate invalid path=" << path;
             return false;
         }
         if(pos == 0 || existsOrCreate(path.substr(0, pos))) {
             std::string new_val(1024, 0);
             v = m_client->create(path, "", new_val);
             if(v != ZOK) {
-                SYLAR_LOG_ERROR(g_logger) << "create path=" << path << " error:"
+                SY_LOG_ERROR(g_logger) << "create path=" << path << " error:"
                     << zerror(v) << " (" << v << ")";
                 return false;
             }
@@ -179,19 +179,19 @@ bool ZKServiceDiscovery::existsOrCreate(const std::string& path) {
 }
 
 static std::string GetProvidersPath(const std::string& domain, const std::string& service) {
-    return "/sylar/" + domain + "/" + service + "/providers";
+    return "/sy/" + domain + "/" + service + "/providers";
 }
 
 static std::string GetConsumersPath(const std::string& domain, const std::string& service) {
-    return "/sylar/" + domain + "/" + service + "/consumers";
+    return "/sy/" + domain + "/" + service + "/consumers";
 }
 
 static std::string GetDomainPath(const std::string& domain) {
-    return "/sylar/" + domain;
+    return "/sy/" + domain;
 }
 
 bool ParseDomainService(const std::string& path, std::string& domain, std::string& service) {
-    auto v = sylar::split(path, '/');
+    auto v = sy::split(path, '/');
     if(v.size() != 5) {
         return false;
     }
@@ -205,7 +205,7 @@ bool ZKServiceDiscovery::registerInfo(const std::string& domain, const std::stri
     std::string path = GetProvidersPath(domain, service);
     bool v = existsOrCreate(path);
     if(!v) {
-        SYLAR_LOG_ERROR(g_logger) << "create path=" << path << " fail";
+        SY_LOG_ERROR(g_logger) << "create path=" << path << " fail";
         return false;
     }
 
@@ -216,7 +216,7 @@ bool ZKServiceDiscovery::registerInfo(const std::string& domain, const std::stri
         return true;
     }
     if(!m_isOnTimer) {
-        SYLAR_LOG_ERROR(g_logger) << "create path=" << (path + "/" + ip_and_port) << " fail, error:"
+        SY_LOG_ERROR(g_logger) << "create path=" << (path + "/" + ip_and_port) << " fail, error:"
             << zerror(rt) << " (" << rt << ")";
     }
     return rt == ZNODEEXISTS;
@@ -227,12 +227,12 @@ bool ZKServiceDiscovery::queryInfo(const std::string& domain, const std::string&
         std::string path = GetConsumersPath(domain, service);
         bool v = existsOrCreate(path);
         if(!v) {
-            SYLAR_LOG_ERROR(g_logger) << "create path=" << path << " fail";
+            SY_LOG_ERROR(g_logger) << "create path=" << path << " fail";
             return false;
         }
 
         if(m_selfInfo.empty()) {
-            SYLAR_LOG_ERROR(g_logger) << "queryInfo selfInfo is null";
+            SY_LOG_ERROR(g_logger) << "queryInfo selfInfo is null";
             return false;
         }
 
@@ -243,7 +243,7 @@ bool ZKServiceDiscovery::queryInfo(const std::string& domain, const std::string&
             return true;
         }
         if(!m_isOnTimer) {
-            SYLAR_LOG_ERROR(g_logger) << "create path=" << (path + "/" + m_selfInfo) << " fail, error:"
+            SY_LOG_ERROR(g_logger) << "create path=" << (path + "/" + m_selfInfo) << " fail, error:"
                 << zerror(rt) << " (" << rt << ")";
         }
         return rt == ZNODEEXISTS;
@@ -262,23 +262,23 @@ bool ZKServiceDiscovery::getChildren(const std::string& path) {
     std::string domain;
     std::string service;
     if(!ParseDomainService(path, domain, service)) {
-        SYLAR_LOG_ERROR(g_logger) << "get_children path=" << path
+        SY_LOG_ERROR(g_logger) << "get_children path=" << path
             << " invalid path";
         return false;
     }
     {
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         auto it = m_queryInfos.find(domain);
         if(it == m_queryInfos.end()) {
-            SYLAR_LOG_ERROR(g_logger) << "get_children path=" << path
+            SY_LOG_ERROR(g_logger) << "get_children path=" << path
                 << " domian=" << domain << " not exists";
             return false;
         }
         if(it->second.count(service) == 0
                 && it->second.count("all") == 0) {
-            SYLAR_LOG_ERROR(g_logger) << "get_children path=" << path
+            SY_LOG_ERROR(g_logger) << "get_children path=" << path
                 << " service=" << service << " not exists "
-                << sylar::Join(it->second.begin(), it->second.end(), ",");
+                << sy::Join(it->second.begin(), it->second.end(), ",");
             return false;
         }
     }
@@ -286,7 +286,7 @@ bool ZKServiceDiscovery::getChildren(const std::string& path) {
     std::vector<std::string> vals;
     int32_t v = m_client->getChildren(path, vals, true);
     if(v != ZOK) {
-        SYLAR_LOG_ERROR(g_logger) << "get_children path=" << path << " fail, error:"
+        SY_LOG_ERROR(g_logger) << "get_children path=" << path << " fail, error:"
             << zerror(v) << " (" << v << ")";
         return false;
     }
@@ -297,12 +297,12 @@ bool ZKServiceDiscovery::getChildren(const std::string& path) {
             continue;
         }
         infos[info->getId()] = info;
-        SYLAR_LOG_INFO(g_logger) << "domain=" << domain
+        SY_LOG_INFO(g_logger) << "domain=" << domain
             << " service=" << service << " info=" << info->toString();
     }
 
     auto new_vals = infos;
-    sylar::RWMutex::WriteLock lock(m_mutex);
+    sy::RWMutex::WriteLock lock(m_mutex);
     m_datas[domain][service].swap(infos);
     lock.unlock();
 
@@ -311,7 +311,7 @@ bool ZKServiceDiscovery::getChildren(const std::string& path) {
 }
 
 bool ZKServiceDiscovery::queryData(const std::string& domain, const std::string& service) {
-    //SYLAR_LOG_INFO(g_logger) << "query_data domain=" << domain
+    //SY_LOG_INFO(g_logger) << "query_data domain=" << domain
     //                         << " service=" << service;
     if(service != "all") {
         std::string path = GetProvidersPath(domain, service);
@@ -328,20 +328,20 @@ bool ZKServiceDiscovery::queryData(const std::string& domain, const std::string&
 }
 
 void ZKServiceDiscovery::onZKChild(const std::string& path, ZKClient::ptr client) {
-    //SYLAR_LOG_INFO(g_logger) << "onZKChild path=" << path;
+    //SY_LOG_INFO(g_logger) << "onZKChild path=" << path;
     getChildren(path);
 }
 
 void ZKServiceDiscovery::onZKChanged(const std::string& path, ZKClient::ptr client) {
-    SYLAR_LOG_INFO(g_logger) << "onZKChanged path=" << path;
+    SY_LOG_INFO(g_logger) << "onZKChanged path=" << path;
 }
 
 void ZKServiceDiscovery::onZKDeleted(const std::string& path, ZKClient::ptr client) {
-    SYLAR_LOG_INFO(g_logger) << "onZKDeleted path=" << path;
+    SY_LOG_INFO(g_logger) << "onZKDeleted path=" << path;
 }
 
 void ZKServiceDiscovery::onZKExpiredSession(const std::string& path, ZKClient::ptr client) {
-    SYLAR_LOG_INFO(g_logger) << "onZKExpiredSession path=" << path;
+    SY_LOG_INFO(g_logger) << "onZKExpiredSession path=" << path;
     client->reconnect();
 }
 
@@ -361,7 +361,7 @@ void ZKServiceDiscovery::onWatch(int type, int stat, const std::string& path, ZK
             return onZKExpiredSession(path, client);
         }
     }
-    SYLAR_LOG_ERROR(g_logger) << "onWatch hosts=" << m_hosts
+    SY_LOG_ERROR(g_logger) << "onWatch hosts=" << m_hosts
         << " type=" << type << " stat=" << stat
         << " path=" << path << " client=" << client;
 }

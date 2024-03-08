@@ -1,20 +1,20 @@
-#ifndef __SYLAR_HTTP_WS_SERVER_H__
-#define __SYLAR_HTTP_WS_SERVER_H__
+#ifndef __SY_HTTP_WS_SERVER_H__
+#define __SY_HTTP_WS_SERVER_H__
 
-#include "sylar/tcp_server.h"
+#include "sy/tcp_server.h"
 #include "ws_session.h"
 #include "ws_servlet.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 class WSServer : public TcpServer {
 public:
     typedef std::shared_ptr<WSServer> ptr;
 
-    WSServer(sylar::IOManager* worker = sylar::IOManager::GetThis()
-             , sylar::IOManager* io_worker = sylar::IOManager::GetThis()
-             , sylar::IOManager* accept_worker = sylar::IOManager::GetThis());
+    WSServer(sy::IOManager* worker = sy::IOManager::GetThis()
+             , sy::IOManager* io_worker = sy::IOManager::GetThis()
+             , sy::IOManager* accept_worker = sy::IOManager::GetThis());
 
     WSServletDispatch::ptr getWSServletDispatch() const { return m_dispatch;}
     void setWSServletDispatch(WSServletDispatch::ptr v) { m_dispatch = v;}

@@ -1,14 +1,14 @@
-#ifndef __SYLAR_DS_BITMAP_H__
-#define __SYLAR_DS_BITMAP_H__
+#ifndef __SY_DS_BITMAP_H__
+#define __SY_DS_BITMAP_H__
 
 #include <stdint.h>
 #include <string>
 #include <vector>
 #include <memory>
 #include <functional>
-#include "sylar/bytearray.h"
+#include "sy/bytearray.h"
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 #define BITMAP_TYPE_UINT8    1
@@ -74,8 +74,8 @@ public:
     void foreach(std::function<bool(uint32_t)> cb);
     void rforeach(std::function<bool(uint32_t)> cb);
 
-    void writeTo(sylar::ByteArray::ptr ba) const;
-    bool readFrom(sylar::ByteArray::ptr ba);
+    void writeTo(sy::ByteArray::ptr ba) const;
+    bool readFrom(sy::ByteArray::ptr ba);
 
     //uncompress to compress
     //uncompress to uncompress

@@ -1,10 +1,10 @@
-#ifndef __SYLAR_NS_NS_CLIENT_H__
-#define __SYLAR_NS_NS_CLIENT_H__
+#ifndef __SY_NS_NS_CLIENT_H__
+#define __SY_NS_NS_CLIENT_H__
 
-#include "sylar/rock/rock_stream.h"
+#include "sy/rock/rock_stream.h"
 #include "ns_protocol.h"
 
-namespace sylar {
+namespace sy {
 namespace ns {
 
 class NSClient : public RockConnection {
@@ -28,17 +28,17 @@ public:
     NSDomainSet::ptr getDomains() const { return m_domains;}
 private:
     void onQueryDomainChange();
-    bool onConnect(sylar::AsyncSocketStream::ptr stream);
-    void onDisconnect(sylar::AsyncSocketStream::ptr stream);
-    bool onNotify(sylar::RockNotify::ptr ,sylar::RockStream::ptr);
+    bool onConnect(sy::AsyncSocketStream::ptr stream);
+    void onDisconnect(sy::AsyncSocketStream::ptr stream);
+    bool onNotify(sy::RockNotify::ptr ,sy::RockStream::ptr);
 
     void onTimer();
 private:
-    sylar::RWMutex m_mutex;
+    sy::RWMutex m_mutex;
     std::set<std::string> m_queryDomains;
     NSDomainSet::ptr m_domains;
     uint32_t m_sn = 0;
-    sylar::Timer::ptr m_timer;
+    sy::Timer::ptr m_timer;
 };
 
 }

@@ -1,18 +1,18 @@
-#ifndef __SYLAR_STREAMS_ASYNC_SOCKET_STREAM_H__
-#define __SYLAR_STREAMS_ASYNC_SOCKET_STREAM_H__
+#ifndef __SY_STREAMS_ASYNC_SOCKET_STREAM_H__
+#define __SY_STREAMS_ASYNC_SOCKET_STREAM_H__
 
 #include "socket_stream.h"
 #include <list>
 #include <unordered_map>
 #include <boost/any.hpp>
 
-namespace sylar {
+namespace sy {
 
 class AsyncSocketStream : public SocketStream
                          ,public std::enable_shared_from_this<AsyncSocketStream> {
 public:
     typedef std::shared_ptr<AsyncSocketStream> ptr;
-    typedef sylar::RWMutex RWMutexType;
+    typedef sy::RWMutex RWMutexType;
     typedef std::function<bool(AsyncSocketStream::ptr)> connect_callback;
     typedef std::function<void(AsyncSocketStream::ptr)> disconnect_callback;
 
@@ -55,11 +55,11 @@ protected:
     };
 
 public:
-    void setWorker(sylar::IOManager* v) { m_worker = v;}
-    sylar::IOManager* getWorker() const { return m_worker;}
+    void setWorker(sy::IOManager* v) { m_worker = v;}
+    sy::IOManager* getWorker() const { return m_worker;}
 
-    void setIOManager(sylar::IOManager* v) { m_iomanager = v;}
-    sylar::IOManager* getIOManager() const { return m_iomanager;}
+    void setIOManager(sy::IOManager* v) { m_iomanager = v;}
+    sy::IOManager* getIOManager() const { return m_iomanager;}
 
     bool isAutoConnect() const { return m_autoConnect;}
     void setAutoConnect(bool v) { m_autoConnect = v;}
@@ -115,8 +115,8 @@ protected:
     bool innerClose();
     bool waitFiber();
 protected:
-    sylar::FiberSemaphore m_sem;
-    sylar::FiberSemaphore m_waitSem;
+    sy::FiberSemaphore m_sem;
+    sy::FiberSemaphore m_waitSem;
     RWMutexType m_queueMutex;
     std::list<SendCtx::ptr> m_queue;
     RWMutexType m_mutex;
@@ -124,9 +124,9 @@ protected:
 
     uint32_t m_sn;
     bool m_autoConnect;
-    sylar::Timer::ptr m_timer;
-    sylar::IOManager* m_iomanager;
-    sylar::IOManager* m_worker;
+    sy::Timer::ptr m_timer;
+    sy::IOManager* m_iomanager;
+    sy::IOManager* m_worker;
 
     connect_callback m_connectCb;
     disconnect_callback m_disconnectCb;
@@ -136,7 +136,7 @@ protected:
 
 class AsyncSocketStreamManager {
 public:
-    typedef sylar::RWMutex RWMutexType;
+    typedef sy::RWMutex RWMutexType;
     typedef AsyncSocketStream::connect_callback connect_callback;
     typedef AsyncSocketStream::disconnect_callback disconnect_callback;
 

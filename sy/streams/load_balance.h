@@ -1,14 +1,14 @@
-#ifndef __SYLAR_STREAMS_SOCKET_STREAM_POOL_H__
-#define __SYLAR_STREAMS_SOCKET_STREAM_POOL_H__
+#ifndef __SY_STREAMS_SOCKET_STREAM_POOL_H__
+#define __SY_STREAMS_SOCKET_STREAM_POOL_H__
 
-#include "sylar/streams/socket_stream.h"
-#include "sylar/mutex.h"
-#include "sylar/util.h"
-#include "sylar/streams/service_discovery.h"
+#include "sy/streams/socket_stream.h"
+#include "sy/mutex.h"
+#include "sy/util.h"
+#include "sy/streams/service_discovery.h"
 #include <vector>
 #include <unordered_map>
 
-namespace sylar {
+namespace sy {
 
 class HolderStatsSet;
 class HolderStats {
@@ -21,14 +21,14 @@ public:
     uint32_t getOks() const { return m_oks; }
     uint32_t getErrs() const { return m_errs; }
 
-    uint32_t incUsedTime(uint32_t v) { return sylar::Atomic::addFetch(m_usedTime ,v);}
-    uint32_t incTotal(uint32_t v) { return sylar::Atomic::addFetch(m_total, v);}
-    uint32_t incDoing(uint32_t v) { return sylar::Atomic::addFetch(m_doing, v);}
-    uint32_t incTimeouts(uint32_t v) { return sylar::Atomic::addFetch(m_timeouts, v);}
-    uint32_t incOks(uint32_t v) { return sylar::Atomic::addFetch(m_oks, v);}
-    uint32_t incErrs(uint32_t v) { return sylar::Atomic::addFetch(m_errs, v);}
+    uint32_t incUsedTime(uint32_t v) { return sy::Atomic::addFetch(m_usedTime ,v);}
+    uint32_t incTotal(uint32_t v) { return sy::Atomic::addFetch(m_total, v);}
+    uint32_t incDoing(uint32_t v) { return sy::Atomic::addFetch(m_doing, v);}
+    uint32_t incTimeouts(uint32_t v) { return sy::Atomic::addFetch(m_timeouts, v);}
+    uint32_t incOks(uint32_t v) { return sy::Atomic::addFetch(m_oks, v);}
+    uint32_t incErrs(uint32_t v) { return sy::Atomic::addFetch(m_errs, v);}
 
-    uint32_t decDoing(uint32_t v) { return sylar::Atomic::subFetch(m_doing, v);}
+    uint32_t decDoing(uint32_t v) { return sy::Atomic::subFetch(m_doing, v);}
     void clear();
 
     float getWeight(float rate = 1.0f);
@@ -109,7 +109,7 @@ public:
 
 class LoadBalance : public ILoadBalance {
 public:
-    typedef sylar::RWMutex RWMutexType;
+    typedef sy::RWMutex RWMutexType;
     typedef std::shared_ptr<LoadBalance> ptr;
     void add(LoadBalanceItem::ptr v);
     void del(LoadBalanceItem::ptr v);
@@ -188,7 +188,7 @@ class SDLoadBalance {
 public:
     typedef std::shared_ptr<SDLoadBalance> ptr;
     typedef std::function<SocketStream::ptr(ServiceItemInfo::ptr)> stream_callback;
-    typedef sylar::RWMutex RWMutexType;
+    typedef sy::RWMutex RWMutexType;
 
     SDLoadBalance(IServiceDiscovery::ptr sd);
     virtual ~SDLoadBalance() {}

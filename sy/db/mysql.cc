@@ -1,12 +1,12 @@
 #include "mysql.h"
-#include "sylar/log.h"
-#include "sylar/config.h"
+#include "sy/log.h"
+#include "sy/config.h"
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
-static sylar::ConfigVar<std::map<std::string, std::map<std::string, std::string> > >::ptr g_mysql_dbs
-    = sylar::Config::Lookup("mysql.dbs", std::map<std::string, std::map<std::string, std::string> >()
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
+static sy::ConfigVar<std::map<std::string, std::map<std::string, std::string> > >::ptr g_mysql_dbs
+    = sy::Config::Lookup("mysql.dbs", std::map<std::string, std::map<std::string, std::string> >()
             , "mysql dbs");
 
 bool mysql_time_to_time_t(const MYSQL_TIME& mt, time_t& ts) {
@@ -58,7 +58,7 @@ static MYSQL* mysql_init(std::map<std::string, std::string>& params,
 
     MYSQL* mysql = ::mysql_init(nullptr);
     if(mysql == nullptr) {
-        SYLAR_LOG_ERROR(g_logger) << "mysql_init error";
+        SY_LOG_ERROR(g_logger) << "mysql_init error";
         return nullptr;
     }
 
@@ -69,15 +69,15 @@ static MYSQL* mysql_init(std::map<std::string, std::string>& params,
     mysql_options(mysql, MYSQL_OPT_RECONNECT, &close);
     mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8mb4");
 
-    int port = sylar::GetParamValue(params, "port", 0);
-    std::string host = sylar::GetParamValue<std::string>(params, "host");
-    std::string user = sylar::GetParamValue<std::string>(params, "user");
-    std::string passwd = sylar::GetParamValue<std::string>(params, "passwd");
-    std::string dbname = sylar::GetParamValue<std::string>(params, "dbname");
+    int port = sy::GetParamValue(params, "port", 0);
+    std::string host = sy::GetParamValue<std::string>(params, "host");
+    std::string user = sy::GetParamValue<std::string>(params, "user");
+    std::string passwd = sy::GetParamValue<std::string>(params, "passwd");
+    std::string dbname = sy::GetParamValue<std::string>(params, "dbname");
 
     if(mysql_real_connect(mysql, host.c_str(), user.c_str(), passwd.c_str()
                           ,dbname.c_str(), port, NULL, 0) == nullptr) {
-        SYLAR_LOG_ERROR(g_logger) << "mysql_real_connect(" << host
+        SY_LOG_ERROR(g_logger) << "mysql_real_connect(" << host
                                   << ", " << port << ", " << dbname
                                   << ") error: " << mysql_error(mysql);
         mysql_close(mysql);
@@ -104,12 +104,12 @@ bool MySQL::connect() {
         return false;
     }
     m_hasError = false;
-    m_poolSize = sylar::GetParamValue(m_params, "pool", 5);
+    m_poolSize = sy::GetParamValue(m_params, "pool", 5);
     m_mysql.reset(m, mysql_close);
     return true;
 }
 
-sylar::IStmt::ptr MySQL::prepare(const std::string& sql) {
+sy::IStmt::ptr MySQL::prepare(const std::string& sql) {
     return MySQLStmt::Create(shared_from_this(), sql);
 }
 
@@ -150,10 +150,10 @@ int MySQL::execute(const char* format, ...) {
 }
 
 int MySQL::execute(const char* format, va_list ap) {
-    m_cmd = sylar::StringUtil::Formatv(format, ap);
+    m_cmd = sy::StringUtil::Formatv(format, ap);
     int r = ::mysql_query(m_mysql.get(), m_cmd.c_str());
     if(r) {
-        SYLAR_LOG_ERROR(g_logger) << "cmd=" << cmd()
+        SY_LOG_ERROR(g_logger) << "cmd=" << cmd()
             << ", error: " << getErrStr();
         m_hasError = true;
     } else {
@@ -166,7 +166,7 @@ int MySQL::execute(const std::string& sql) {
     m_cmd = sql;
     int r = ::mysql_query(m_mysql.get(), m_cmd.c_str());
     if(r) {
-        SYLAR_LOG_ERROR(g_logger) << "cmd=" << cmd()
+        SY_LOG_ERROR(g_logger) << "cmd=" << cmd()
             << ", error: " << getErrStr();
         m_hasError = true;
     } else {
@@ -176,7 +176,7 @@ int MySQL::execute(const std::string& sql) {
 }
 
 std::shared_ptr<MySQL> MySQL::getMySQL() {
-    return MySQL::ptr(this, sylar::nop<MySQL>);
+    return MySQL::ptr(this, sy::nop<MySQL>);
 }
 
 std::shared_ptr<MYSQL> MySQL::getRaw() {
@@ -192,24 +192,24 @@ uint64_t MySQL::getAffectedRows() {
 
 static MYSQL_RES* my_mysql_query(MYSQL* mysql, const char* sql) {
     if(mysql == nullptr) {
-        SYLAR_LOG_ERROR(g_logger) << "mysql_query mysql is null";
+        SY_LOG_ERROR(g_logger) << "mysql_query mysql is null";
         return nullptr;
     }
 
     if(sql == nullptr) {
-        SYLAR_LOG_ERROR(g_logger) << "mysql_query sql is null";
+        SY_LOG_ERROR(g_logger) << "mysql_query sql is null";
         return nullptr;
     }
 
     if(::mysql_query(mysql, sql)) {
-        SYLAR_LOG_ERROR(g_logger) << "mysql_query(" << sql << ") error:"
+        SY_LOG_ERROR(g_logger) << "mysql_query(" << sql << ") error:"
             << mysql_error(mysql);
         return nullptr;
     }
 
     MYSQL_RES* res = mysql_store_result(mysql);
     if(res == nullptr) {
-        SYLAR_LOG_ERROR(g_logger) << "mysql_store_result() error:"
+        SY_LOG_ERROR(g_logger) << "mysql_store_result() error:"
             << mysql_error(mysql);
     }
     return res;
@@ -221,7 +221,7 @@ MySQLStmt::ptr MySQLStmt::Create(MySQL::ptr db, const std::string& stmt) {
         return nullptr;
     }
     if(mysql_stmt_prepare(st, stmt.c_str(), stmt.size())) {
-        SYLAR_LOG_ERROR(g_logger) << "stmt=" << stmt
+        SY_LOG_ERROR(g_logger) << "stmt=" << stmt
             << " errno=" << mysql_stmt_errno(st)
             << " errstr=" << mysql_stmt_error(st);
         mysql_stmt_close(st);
@@ -483,7 +483,7 @@ int MySQLStmt::bindTime(int idx, const time_t& value) {
     //m_binds[idx].buffer = mt;
     //m_binds[idx].buffer_length = sizeof(MYSQL_TIME);
     //return 0;
-    return bindString(idx, sylar::Time2Str(value));
+    return bindString(idx, sy::Time2Str(value));
 }
 
 int MySQLStmt::execute() {
@@ -574,7 +574,7 @@ uint32_t MySQLRes::getUint32(int idx) {
 }
 
 int64_t MySQLRes::getInt64(int idx) {
-    return sylar::TypeUtil::Atoi(m_cur[idx]);
+    return sy::TypeUtil::Atoi(m_cur[idx]);
 }
 
 uint64_t MySQLRes::getUint64(int idx) {
@@ -586,7 +586,7 @@ float MySQLRes::getFloat(int idx) {
 }
 
 double MySQLRes::getDouble(int idx) {
-    return sylar::TypeUtil::Atof(m_cur[idx]);
+    return sy::TypeUtil::Atof(m_cur[idx]);
 }
 
 std::string MySQLRes::getString(int idx) {
@@ -601,7 +601,7 @@ time_t MySQLRes::getTime(int idx) {
     if(!m_cur[idx]) {
         return 0;
     }
-    return sylar::Str2Time(m_cur[idx]);
+    return sy::Str2Time(m_cur[idx]);
 }
 
 bool MySQLRes::next() {
@@ -809,7 +809,7 @@ ISQLData::ptr MySQL::query(const char* format, ...) {
 }
 
 ISQLData::ptr MySQL::query(const char* format, va_list ap) {
-    m_cmd = sylar::StringUtil::Formatv(format, ap);
+    m_cmd = sy::StringUtil::Formatv(format, ap);
     MYSQL_RES* res = my_mysql_query(m_mysql.get(), m_cmd.c_str());
     if(!res) {
         m_hasError = true;
@@ -941,7 +941,7 @@ int MySQLTransaction::execute(const char* format, ...) {
 
 int MySQLTransaction::execute(const char* format, va_list ap) {
     if(m_isFinished) {
-        SYLAR_LOG_ERROR(g_logger) << "transaction is finished, format=" << format;
+        SY_LOG_ERROR(g_logger) << "transaction is finished, format=" << format;
         return -1;
     }
     int rt = m_mysql->execute(format, ap);
@@ -953,7 +953,7 @@ int MySQLTransaction::execute(const char* format, va_list ap) {
 
 int MySQLTransaction::execute(const std::string& sql) {
     if(m_isFinished) {
-        SYLAR_LOG_ERROR(g_logger) << "transaction is finished, sql=" << sql;
+        SY_LOG_ERROR(g_logger) << "transaction is finished, sql=" << sql;
         return -1;
     }
     int rt = m_mysql->execute(sql);
@@ -1011,7 +1011,7 @@ MySQL::ptr MySQLManager::get(const std::string& name) {
                 return MySQL::ptr(rt, std::bind(&MySQLManager::freeMySQL,
                             this, name, std::placeholders::_1));
             } else {
-                SYLAR_LOG_WARN(g_logger) << "reconnect " << name << " fail";
+                SY_LOG_WARN(g_logger) << "reconnect " << name << " fail";
                 return nullptr;
             }
         }
@@ -1079,7 +1079,7 @@ int MySQLManager::execute(const std::string& name, const char* format, ...) {
 int MySQLManager::execute(const std::string& name, const char* format, va_list ap) {
     auto conn = get(name);
     if(!conn) {
-        SYLAR_LOG_ERROR(g_logger) << "MySQLManager::execute, get(" << name
+        SY_LOG_ERROR(g_logger) << "MySQLManager::execute, get(" << name
             << ") fail, format=" << format;
         return -1;
     }
@@ -1089,7 +1089,7 @@ int MySQLManager::execute(const std::string& name, const char* format, va_list a
 int MySQLManager::execute(const std::string& name, const std::string& sql) {
     auto conn = get(name);
     if(!conn) {
-        SYLAR_LOG_ERROR(g_logger) << "MySQLManager::execute, get(" << name
+        SY_LOG_ERROR(g_logger) << "MySQLManager::execute, get(" << name
             << ") fail, sql=" << sql;
         return -1;
     }
@@ -1107,7 +1107,7 @@ ISQLData::ptr MySQLManager::query(const std::string& name, const char* format, .
 ISQLData::ptr MySQLManager::query(const std::string& name, const char* format, va_list ap) {
     auto conn = get(name);
     if(!conn) {
-        SYLAR_LOG_ERROR(g_logger) << "MySQLManager::query, get(" << name
+        SY_LOG_ERROR(g_logger) << "MySQLManager::query, get(" << name
             << ") fail, format=" << format;
         return nullptr;
     }
@@ -1117,7 +1117,7 @@ ISQLData::ptr MySQLManager::query(const std::string& name, const char* format, v
 ISQLData::ptr MySQLManager::query(const std::string& name, const std::string& sql) {
     auto conn = get(name);
     if(!conn) {
-        SYLAR_LOG_ERROR(g_logger) << "MySQLManager::query, get(" << name
+        SY_LOG_ERROR(g_logger) << "MySQLManager::query, get(" << name
             << ") fail, sql=" << sql;
         return nullptr;
     }
@@ -1127,7 +1127,7 @@ ISQLData::ptr MySQLManager::query(const std::string& name, const std::string& sq
 MySQLTransaction::ptr MySQLManager::openTransaction(const std::string& name, bool auto_commit) {
     auto conn = get(name);
     if(!conn) {
-        SYLAR_LOG_ERROR(g_logger) << "MySQLManager::openTransaction, get(" << name
+        SY_LOG_ERROR(g_logger) << "MySQLManager::openTransaction, get(" << name
             << ") fail";
         return nullptr;
     }

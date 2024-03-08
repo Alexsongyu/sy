@@ -1,6 +1,6 @@
 #include "ws_connection.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 WSConnection::WSConnection(Socket::ptr sock, bool owner) 
@@ -62,7 +62,7 @@ std::pair<HttpResult::ptr, WSConnection::ptr> WSConnection::Create(Uri::ptr uri
     }
     req->setHeader("Upgrade", "websocket");
     req->setHeader("Sec-webSocket-Version", "13");
-    req->setHeader("Sec-webSocket-Key", sylar::base64encode(random_string(16)));
+    req->setHeader("Sec-webSocket-Key", sy::base64encode(random_string(16)));
     if(!has_host) {
         req->setHeader("Host", uri->getHost());
     }

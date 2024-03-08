@@ -1,7 +1,7 @@
-#include "sylar/protocol.h"
-#include "sylar/util.h"
+#include "sy/protocol.h"
+#include "sy/util.h"
 
-namespace sylar {
+namespace sy {
 
 ByteArray::ptr Message::toByteArray() {
     ByteArray::ptr ba(new ByteArray);

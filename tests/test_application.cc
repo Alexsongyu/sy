@@ -1,7 +1,7 @@
-#include "sylar/application.h"
+#include "sy/application.h"
 
 int main(int argc, char** argv) {
-    sylar::Application app;
+    sy::Application app;
     if(app.init(argc, argv)) {
         return app.run();
     }

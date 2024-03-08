@@ -1,32 +1,32 @@
 #include "my_module.h"
-#include "sylar/config.h"
-#include "sylar/log.h"
+#include "sy/config.h"
+#include "sy/log.h"
 
 namespace name_space {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+static sy::Logger::ptr g_logger = SY_LOG_ROOT();
 
 MyModule::MyModule()
-    :sylar::Module("project_name", "1.0", "") {
+    :sy::Module("project_name", "1.0", "") {
 }
 
 bool MyModule::onLoad() {
-    SYLAR_LOG_INFO(g_logger) << "onLoad";
+    SY_LOG_INFO(g_logger) << "onLoad";
     return true;
 }
 
 bool MyModule::onUnload() {
-    SYLAR_LOG_INFO(g_logger) << "onUnload";
+    SY_LOG_INFO(g_logger) << "onUnload";
     return true;
 }
 
 bool MyModule::onServerReady() {
-    SYLAR_LOG_INFO(g_logger) << "onServerReady";
+    SY_LOG_INFO(g_logger) << "onServerReady";
     return true;
 }
 
 bool MyModule::onServerUp() {
-    SYLAR_LOG_INFO(g_logger) << "onServerUp";
+    SY_LOG_INFO(g_logger) << "onServerUp";
     return true;
 }
 
@@ -34,14 +34,14 @@ bool MyModule::onServerUp() {
 
 extern "C" {
 
-sylar::Module* CreateModule() {
-    sylar::Module* module = new name_space::MyModule;
-    SYLAR_LOG_INFO(name_space::g_logger) << "CreateModule " << module;
+sy::Module* CreateModule() {
+    sy::Module* module = new name_space::MyModule;
+    SY_LOG_INFO(name_space::g_logger) << "CreateModule " << module;
     return module;
 }
 
-void DestoryModule(sylar::Module* module) {
-    SYLAR_LOG_INFO(name_space::g_logger) << "CreateModule " << module;
+void DestoryModule(sy::Module* module) {
+    SY_LOG_INFO(name_space::g_logger) << "CreateModule " << module;
     delete module;
 }
 

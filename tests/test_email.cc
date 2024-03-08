@@ -1,21 +1,21 @@
-#include "sylar/email/email.h"
-#include "sylar/email/smtp.h"
+#include "sy/email/email.h"
+#include "sy/email/smtp.h"
 
 void test() {
-    sylar::EMail::ptr email = sylar::EMail::Create(
+    sy::EMail::ptr email = sy::EMail::Create(
             "user@163.com", "passwd",
             "hello world", "<B>hi xxx</B>hell world", {"564628276@qq.com"});
-    sylar::EMailEntity::ptr entity = sylar::EMailEntity::CreateAttach("sylar/sylar.h");
+    sy::EMailEntity::ptr entity = sy::EMailEntity::CreateAttach("sy/sy.h");
     if(entity) {
         email->addEntity(entity);
     }
 
-    entity = sylar::EMailEntity::CreateAttach("sylar/address.cc");
+    entity = sy::EMailEntity::CreateAttach("sy/address.cc");
     if(entity) {
         email->addEntity(entity);
     }
 
-    auto client = sylar::SmtpClient::Create("smtp.163.com", 465, true);
+    auto client = sy::SmtpClient::Create("smtp.163.com", 465, true);
     if(!client) {
         std::cout << "connect smtp.163.com:25 fail" << std::endl;
         return;
@@ -30,7 +30,7 @@ void test() {
 }
 
 int main(int argc, char** argv) {
-    sylar::IOManager iom(1);
+    sy::IOManager iom(1);
     iom.schedule(test);
     iom.stop();
     return 0;

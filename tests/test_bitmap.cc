@@ -1,23 +1,23 @@
-#include "sylar/sylar.h"
-#include "sylar/ds/bitmap.h"
-#include "sylar/ds/roaring_bitmap.h"
+#include "sy/sy.h"
+#include "sy/ds/bitmap.h"
+#include "sy/ds/roaring_bitmap.h"
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+static sy::Logger::ptr g_logger = SY_LOG_ROOT();
 #if 0
 void init(uint32_t size, std::set<uint32_t> v = {}) {
     //uint32_t size = rand() % 8 * 7 + 128;
     std::set<uint32_t> v0;
-    sylar::ds::Bitmap::ptr b;
+    sy::ds::Bitmap::ptr b;
     if(!size) {
         size = rand() % 4096;
-        b.reset(new sylar::ds::Bitmap(size));
+        b.reset(new sy::ds::Bitmap(size));
         for(int i = 0; i < (int)(size / 2); ++i) {
             uint32_t t = rand() % size;
             v0.insert(t);
             b->set(t, true);
         }
     } else {
-        b.reset(new sylar::ds::Bitmap(size));
+        b.reset(new sy::ds::Bitmap(size));
         for(auto& i : v) {
             uint32_t t = i % size;
             v0.insert(t);
@@ -25,9 +25,9 @@ void init(uint32_t size, std::set<uint32_t> v = {}) {
         }
     }
 
-    sylar::ds::Bitmap::ptr c(new sylar::ds::Bitmap(size, 0xFF));
+    sy::ds::Bitmap::ptr c(new sy::ds::Bitmap(size, 0xFF));
     *c &= *b;
-    SYLAR_ASSERT(c->getCount() == v0.size());
+    SY_ASSERT(c->getCount() == v0.size());
 
     std::vector<uint32_t> v00(v0.begin(), v0.end());
     std::vector<uint32_t> v000(v0.rbegin(), v0.rend());
@@ -35,7 +35,7 @@ void init(uint32_t size, std::set<uint32_t> v = {}) {
     //    32,47,63,79,88,89,104,107,109,113,116,152,165,182,187,207,220,222,239,240,251,263,271,287,288,303,305,308,320
     //};
     //uint32_t size = 328;
-    //sylar::ds::Bitmap::ptr b(new sylar::ds::Bitmap(size));
+    //sy::ds::Bitmap::ptr b(new sy::ds::Bitmap(size));
     //for(auto& i : vv) {
     //    b->set(i, true);
     //}
@@ -68,10 +68,10 @@ void init(uint32_t size, std::set<uint32_t> v = {}) {
         return true;
     });
 
-    sylar::ds::Bitmap::ptr bb(new sylar::ds::Bitmap(size, 0xFF));
+    sy::ds::Bitmap::ptr bb(new sy::ds::Bitmap(size, 0xFF));
     *b &= *bb;
 #define XX(v) \
-        SYLAR_LOG_INFO(g_logger) << #v ": " << sylar::Join(v.begin(), v.end(), ",");
+        SY_LOG_INFO(g_logger) << #v ": " << sy::Join(v.begin(), v.end(), ",");
 
 #define XX_ASSERT(a, b) \
         if(a != b) { \
@@ -82,7 +82,7 @@ void init(uint32_t size, std::set<uint32_t> v = {}) {
             XX(v2); \
             XX(v4); \
             XX(v5); \
-            SYLAR_ASSERT(a == b); \
+            SY_ASSERT(a == b); \
         }
 
     XX_ASSERT(v00, v5);
@@ -91,27 +91,27 @@ void init(uint32_t size, std::set<uint32_t> v = {}) {
         XX_ASSERT(v000, v2);
         XX_ASSERT(v00, v3);
         XX_ASSERT(v000, v4);
-        //SYLAR_ASSERT(v00 == v3);
-        //SYLAR_ASSERT(v1 == v3);
-        //SYLAR_ASSERT(v2 == v4);
+        //SY_ASSERT(v00 == v3);
+        //SY_ASSERT(v1 == v3);
+        //SY_ASSERT(v2 == v4);
 #undef XX_ASSERT
 #undef XX
     }
-    //SYLAR_LOG_INFO(g_logger) << "size: " << size;
+    //SY_LOG_INFO(g_logger) << "size: " << size;
 }
 
 void test_compress(size_t size, std::set<uint32_t> v = {}) {
-    sylar::ds::Bitmap::ptr b;
+    sy::ds::Bitmap::ptr b;
     if(size == 0) {
         size = rand() % 4096;
-        b.reset(new sylar::ds::Bitmap(size));
+        b.reset(new sy::ds::Bitmap(size));
         for(size_t i = 0; i < size / 100; ++i) {
             auto t = rand() % size;
             b->set(t, 1);
             v.insert(t);
         }
     } else {
-        b.reset(new sylar::ds::Bitmap(size));
+        b.reset(new sy::ds::Bitmap(size));
         for(auto& i : v) {
             b->set(i, 1);
         }
@@ -121,25 +121,25 @@ void test_compress(size_t size, std::set<uint32_t> v = {}) {
     auto bb = bc->uncompress();
 
     if(*b != *bb) {
-        SYLAR_LOG_INFO(g_logger) << "b  :" << b->toString();
-        SYLAR_LOG_INFO(g_logger) << "bc :" << bc->toString();
-        SYLAR_LOG_INFO(g_logger) << "bb :" << bb->toString();
-        SYLAR_LOG_INFO(g_logger) << "size=" << size << " - " << sylar::Join(v.begin(), v.end(), ",");
+        SY_LOG_INFO(g_logger) << "b  :" << b->toString();
+        SY_LOG_INFO(g_logger) << "bc :" << bc->toString();
+        SY_LOG_INFO(g_logger) << "bb :" << bb->toString();
+        SY_LOG_INFO(g_logger) << "size=" << size << " - " << sy::Join(v.begin(), v.end(), ",");
 
-        SYLAR_ASSERT(*b == *bb);
+        SY_ASSERT(*b == *bb);
     }
     //std::cout << "size=" << size << " value_size=" << v.size()
     //          << " compress_rate=" << bc->getCompressRate() << std::endl;
 }
 
 void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
-    sylar::ds::Bitmap::ptr a;
-    sylar::ds::Bitmap::ptr b;
+    sy::ds::Bitmap::ptr a;
+    sy::ds::Bitmap::ptr b;
 
     if(size == 0) {
         size = rand() % 4096;
-        a.reset(new sylar::ds::Bitmap(size));
-        b.reset(new sylar::ds::Bitmap(size));
+        a.reset(new sy::ds::Bitmap(size));
+        b.reset(new sy::ds::Bitmap(size));
         for(size_t i = 0; i < size / 16; ++i) {
             auto t = rand() % size;
             a->set(t, 1);
@@ -151,8 +151,8 @@ void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
             v2.insert(t);
         }
     } else {
-        a.reset(new sylar::ds::Bitmap(size));
-        b.reset(new sylar::ds::Bitmap(size));
+        a.reset(new sy::ds::Bitmap(size));
+        b.reset(new sy::ds::Bitmap(size));
         for(auto& i : v1) {
             a->set(i, 1);
         }
@@ -170,7 +170,7 @@ void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
     auto xorb = ~*bc;
     auto xorb2 = ~*bc;
 
-    SYLAR_ASSERT(a->cross(*b) == a->cross(*bc));
+    SY_ASSERT(a->cross(*b) == a->cross(*bc));
 
 
     std::vector<uint32_t> and_sv;
@@ -179,7 +179,7 @@ void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
     std::set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(or_sv));
     std::set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(and_sv));
 
-    SYLAR_ASSERT(a->cross(*b) == (!and_sv.empty()));
+    SY_ASSERT(a->cross(*b) == (!and_sv.empty()));
 
     std::vector<uint32_t> and_sv2;
     std::vector<uint32_t> or_sv2;
@@ -193,7 +193,7 @@ void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
     });
 
 #define XX(v) \
-        SYLAR_LOG_INFO(g_logger) << #v ": " << sylar::Join(v.begin(), v.end(), ",");
+        SY_LOG_INFO(g_logger) << #v ": " << sy::Join(v.begin(), v.end(), ",");
 
 #define XX_ASSERT(a, b) \
         if(a != b) { \
@@ -204,7 +204,7 @@ void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
             XX(and_sv2); \
             XX(or_sv); \
             XX(or_sv2); \
-            SYLAR_ASSERT(a == b); \
+            SY_ASSERT(a == b); \
         }
         XX_ASSERT(and_sv, and_sv2);
         XX_ASSERT(or_sv, or_sv2);
@@ -220,9 +220,9 @@ void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
             std::cout << "b: " << b->toString() << std::endl;
             XX_ASSERT(xorb2, *bc);
         }
-        //SYLAR_ASSERT(v00 == v3);
-        //SYLAR_ASSERT(v1 == v3);
-        //SYLAR_ASSERT(v2 == v4);
+        //SY_ASSERT(v00 == v3);
+        //SY_ASSERT(v1 == v3);
+        //SY_ASSERT(v2 == v4);
 #undef XX_ASSERT
 #undef XX
 
@@ -231,7 +231,7 @@ void test_op(size_t size, std::set<uint32_t> v1, std::set<uint32_t> v2) {
 int main(int argc, char** argv) {
     srand(time(0));
     {
-        sylar::ds::Bitmap::ptr b(new sylar::ds::Bitmap(504));
+        sy::ds::Bitmap::ptr b(new sy::ds::Bitmap(504));
     }
     //init(64, {4,5,7,8,14,17,18,19,20,21,23,27,29,32,35,39,40,41,43,46,48,50,51,53,62});
     //init(32, {1,3,4,6,7,10,11,12,15,18,22,24,26,29});
@@ -253,9 +253,9 @@ int main(int argc, char** argv) {
 }
 #endif
 
-std::vector<sylar::ds::Bitmap::ptr> vs;
-std::vector<sylar::ds::Bitmap::ptr> vs2;
-std::vector<sylar::ds::RoaringBitmap::ptr> vs3;
+std::vector<sy::ds::Bitmap::ptr> vs;
+std::vector<sy::ds::Bitmap::ptr> vs2;
+std::vector<sy::ds::RoaringBitmap::ptr> vs3;
 
 int N = 1;
 int M = 250000000;
@@ -265,8 +265,8 @@ void init() {
     vs2.resize(N);
     vs3.resize(N);
     for(int i = 0; i < N; ++i) {
-        sylar::ds::Bitmap::ptr r(new sylar::ds::Bitmap(M));
-        sylar::ds::RoaringBitmap::ptr r2(new sylar::ds::RoaringBitmap());
+        sy::ds::Bitmap::ptr r(new sy::ds::Bitmap(M));
+        sy::ds::RoaringBitmap::ptr r2(new sy::ds::RoaringBitmap());
         for(int i = 0; i < M / 1; ++i) {
             uint32_t v = rand() % M;
             r->set(v, true);
@@ -301,8 +301,8 @@ void x_uncompress() {
 
 void write_to_file(const std::string& name) {
     {
-        sylar::ByteArray::ptr ba(new sylar::ByteArray);
-        sylar::ds::Bitmap::ptr a;
+        sy::ByteArray::ptr ba(new sy::ByteArray);
+        sy::ds::Bitmap::ptr a;
         for(auto& i : vs) {
             a = i;
             i->writeTo(ba);
@@ -317,7 +317,7 @@ void write_to_file(const std::string& name) {
                   << std::endl;
 
 
-        a.reset(new sylar::ds::Bitmap(0));
+        a.reset(new sy::ds::Bitmap(0));
         a->readFrom(ba);
 
         std::cout << "*compress= " << a->isCompress()
@@ -329,8 +329,8 @@ void write_to_file(const std::string& name) {
     }
 
     {
-        sylar::ByteArray::ptr ba(new sylar::ByteArray);
-        sylar::ds::RoaringBitmap::ptr a;
+        sy::ByteArray::ptr ba(new sy::ByteArray);
+        sy::ds::RoaringBitmap::ptr a;
         for(auto& i : vs3) {
             a = i;
             i->writeTo(ba);
@@ -342,7 +342,7 @@ void write_to_file(const std::string& name) {
                   << std::endl;
 
 
-        a.reset(new sylar::ds::RoaringBitmap);
+        a.reset(new sy::ds::RoaringBitmap);
         a->readFrom(ba);
 
         std::cout << "=compress= " << a->toString()
@@ -353,10 +353,10 @@ void write_to_file(const std::string& name) {
 }
 
 void load_from_file(const std::string& name) {
-    sylar::ByteArray::ptr ba(new sylar::ByteArray);
+    sy::ByteArray::ptr ba(new sy::ByteArray);
     ba->readFromFile(name);
     ba->setPosition(0);
-    sylar::ds::Bitmap::ptr a(new sylar::ds::Bitmap(0));
+    sy::ds::Bitmap::ptr a(new sy::ds::Bitmap(0));
     a->readFrom(ba);
     std::cout << "compress= " << a->isCompress()
               << " rate=" << a->getCompressRate()
@@ -376,7 +376,7 @@ void test_uncompress() {
 void test_uncompress2() {
     for(int i = 0; i < N; ++i) {
         for(int n = i + 1; n < N; ++n) {
-            sylar::ds::Bitmap::ptr b(new sylar::ds::Bitmap(M));
+            sy::ds::Bitmap::ptr b(new sy::ds::Bitmap(M));
             *b |= *vs2[i];
         }
     }
@@ -385,10 +385,10 @@ void test_uncompress2() {
 void test_uncompress3() {
     for(int i = 0; i < N; ++i) {
         for(int n = i + 1; n < N; ++n) {
-            sylar::ds::Bitmap::ptr b(new sylar::ds::Bitmap(M));
+            sy::ds::Bitmap::ptr b(new sy::ds::Bitmap(M));
             *b |= *vs2[i];
 
-            SYLAR_ASSERT(*b == *vs2[i]->uncompress());
+            SY_ASSERT(*b == *vs2[i]->uncompress());
         }
     }
 }
@@ -396,10 +396,10 @@ void test_uncompress3() {
 void test_uncompress4() {
     for(int i = 0; i < N; ++i) {
         for(int n = i + 1; n < N; ++n) {
-            sylar::ds::Bitmap::ptr b(new sylar::ds::Bitmap(M, 0xff));
+            sy::ds::Bitmap::ptr b(new sy::ds::Bitmap(M, 0xff));
             *b &= *vs2[i];
 
-            SYLAR_ASSERT(*b == *vs2[i]->uncompress());
+            SY_ASSERT(*b == *vs2[i]->uncompress());
         }
     }
 }
@@ -437,7 +437,7 @@ void check() {
 }
 
 void test_roaring_bitmap() {
-    sylar::ds::RoaringBitmap::ptr rb(new sylar::ds::RoaringBitmap);
+    sy::ds::RoaringBitmap::ptr rb(new sy::ds::RoaringBitmap);
     for(int i = 0; i < 10; ++i) {
         rb->set(rand(), true);
     }

@@ -1,7 +1,7 @@
-#include "sylar/sylar.h"
-#include "sylar/ds/array.h"
+#include "sy/sy.h"
+#include "sy/ds/array.h"
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+static sy::Logger::ptr g_logger = SY_LOG_ROOT();
 
 struct PidVid {
     PidVid(uint32_t p = 0, uint32_t v = 0)
@@ -15,13 +15,13 @@ struct PidVid {
 };
 
 void gen() {
-    sylar::ds::Array<int> tmp;
+    sy::ds::Array<int> tmp;
     std::vector<int> vs;
     for(int i = 0; i < 10000; ++i) {
         int v = rand();
         tmp.insert(v);
         vs.push_back(v);
-        SYLAR_ASSERT(tmp.isSorted());
+        SY_ASSERT(tmp.isSorted());
     }
 
     std::ofstream ofs("./array.data");
@@ -29,25 +29,25 @@ void gen() {
 
     for(auto& i : vs) {
         auto idx = tmp.exists(i);
-        SYLAR_ASSERT(idx >= 0);
+        SY_ASSERT(idx >= 0);
         tmp.erase(idx);
-        SYLAR_ASSERT(tmp.isSorted());
+        SY_ASSERT(tmp.isSorted());
     }
-    SYLAR_ASSERT(tmp.size() == 0);
+    SY_ASSERT(tmp.size() == 0);
     
 }
 
 void test() {
     for(int i = 0; i < 10000; ++i) {
-        SYLAR_LOG_INFO(g_logger) << "i=" << i;
+        SY_LOG_INFO(g_logger) << "i=" << i;
         std::ifstream ifs("./array.data");
-        sylar::ds::Array<int> tmp;
+        sy::ds::Array<int> tmp;
         if(!tmp.readFrom(ifs)) {
-            SYLAR_LOG_INFO(g_logger) << "error";
+            SY_LOG_INFO(g_logger) << "error";
         }
-        SYLAR_ASSERT(tmp.isSorted());
+        SY_ASSERT(tmp.isSorted());
         if(i % 100 == 0) {
-            SYLAR_LOG_INFO(g_logger) << "over..." << (i + 1);
+            SY_LOG_INFO(g_logger) << "over..." << (i + 1);
         }
     }
 }

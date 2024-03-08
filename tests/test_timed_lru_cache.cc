@@ -1,7 +1,7 @@
-#include "sylar/ds/timed_lru_cache.h"
+#include "sy/ds/timed_lru_cache.h"
 
 void test_timed_lru_cache() {
-    sylar::ds::TimedLruCache<int, int> cache(30, 10);
+    sy::ds::TimedLruCache<int, int> cache(30, 10);
     for(int i = 0; i < 105; ++i) {
         cache.set(i, i * 100, 1000);
     }
@@ -25,7 +25,7 @@ void test_timed_lru_cache() {
 }
 
 void test_hash_timed_lru_cache() {
-    sylar::ds::HashTimedLruCache<int, int> cache(2, 30, 10);
+    sy::ds::HashTimedLruCache<int, int> cache(2, 30, 10);
     for(int i = 0; i < 105; ++i) {
         cache.set(i, i * 100, 1000);
     }

@@ -1,11 +1,11 @@
-#ifndef __SYLAR_UTIL_HASH_UTIL_H__
-#define __SYLAR_UTIL_HASH_UTIL_H__
+#ifndef __SY_UTIL_HASH_UTIL_H__
+#define __SY_UTIL_HASH_UTIL_H__
 
 #include <stdint.h>
 #include <string>
 #include <vector>
 
-namespace sylar {
+namespace sy {
 
 uint32_t murmur3_hash(const char * str, const uint32_t & seed = 1060627423);
 uint64_t murmur3_hash64(const char * str, const uint32_t & seed = 1060627423, const uint32_t& seed2 = 1050126127);

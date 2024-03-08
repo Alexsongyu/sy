@@ -2,12 +2,12 @@
 #include "config.h"
 #include "util.h"
 
-namespace sylar {
+namespace sy {
 
-static sylar::ConfigVar<std::map<std::string, std::map<std::string, std::string> > >::ptr g_worker_config
-    = sylar::Config::Lookup("workers", std::map<std::string, std::map<std::string, std::string> >(), "worker config");
+static sy::ConfigVar<std::map<std::string, std::map<std::string, std::string> > >::ptr g_worker_config
+    = sy::Config::Lookup("workers", std::map<std::string, std::map<std::string, std::string> >(), "worker config");
 
-WorkerGroup::WorkerGroup(uint32_t batch_size, sylar::Scheduler* s)
+WorkerGroup::WorkerGroup(uint32_t batch_size, sy::Scheduler* s)
     :m_batchSize(batch_size)
     ,m_finish(false)
     ,m_scheduler(s)
@@ -64,8 +64,8 @@ IOManager::ptr WorkerManager::getAsIOManager(const std::string& name) {
 bool WorkerManager::init(const std::map<std::string, std::map<std::string, std::string> >& v) {
     for(auto& i : v) {
         std::string name = i.first;
-        int32_t thread_num = sylar::GetParamValue(i.second, "thread_num", 1);
-        int32_t worker_num = sylar::GetParamValue(i.second, "worker_num", 1);
+        int32_t thread_num = sy::GetParamValue(i.second, "thread_num", 1);
+        int32_t worker_num = sy::GetParamValue(i.second, "worker_num", 1);
 
         for(int32_t x = 0; x < worker_num; ++x) {
             Scheduler::ptr s;

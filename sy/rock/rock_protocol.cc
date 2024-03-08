@@ -1,19 +1,19 @@
 #include "rock_protocol.h"
-#include "sylar/log.h"
-#include "sylar/config.h"
-#include "sylar/endian.h"
-#include "sylar/streams/zlib_stream.h"
+#include "sy/log.h"
+#include "sy/config.h"
+#include "sy/endian.h"
+#include "sy/streams/zlib_stream.h"
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
-static sylar::ConfigVar<uint32_t>::ptr g_rock_protocol_max_length
-    = sylar::Config::Lookup("rock.protocol.max_length",
+static sy::ConfigVar<uint32_t>::ptr g_rock_protocol_max_length
+    = sy::Config::Lookup("rock.protocol.max_length",
                             (uint32_t)(1024 * 1024 * 64), "rock protocol max length");
 
-static sylar::ConfigVar<uint32_t>::ptr g_rock_protocol_gzip_min_length
-    = sylar::Config::Lookup("rock.protocol.gzip_min_length",
+static sy::ConfigVar<uint32_t>::ptr g_rock_protocol_gzip_min_length
+    = sy::Config::Lookup("rock.protocol.gzip_min_length",
                             (uint32_t)(1024 * 4), "rock protocol gizp min length");
 
 bool RockBody::serializeToByteArray(ByteArray::ptr bytearray) {
@@ -58,7 +58,7 @@ bool RockRequest::serializeToByteArray(ByteArray::ptr bytearray) {
         v &= RockBody::serializeToByteArray(bytearray);
         return v;
     } catch (...) {
-        SYLAR_LOG_ERROR(g_logger) << "RockRequest serializeToByteArray error";
+        SY_LOG_ERROR(g_logger) << "RockRequest serializeToByteArray error";
     }
     return false;
 }
@@ -70,7 +70,7 @@ bool RockRequest::parseFromByteArray(ByteArray::ptr bytearray) {
         v &= RockBody::parseFromByteArray(bytearray);
         return v;
     } catch (...) {
-        SYLAR_LOG_ERROR(g_logger) << "RockRequest parseFromByteArray error";
+        SY_LOG_ERROR(g_logger) << "RockRequest parseFromByteArray error";
     }
     return false;
 }
@@ -102,7 +102,7 @@ bool RockResponse::serializeToByteArray(ByteArray::ptr bytearray) {
         v &= RockBody::serializeToByteArray(bytearray);
         return v;
     } catch (...) {
-        SYLAR_LOG_ERROR(g_logger) << "RockResponse serializeToByteArray error";
+        SY_LOG_ERROR(g_logger) << "RockResponse serializeToByteArray error";
     }
     return false;
 }
@@ -114,7 +114,7 @@ bool RockResponse::parseFromByteArray(ByteArray::ptr bytearray) {
         v &= RockBody::parseFromByteArray(bytearray);
         return v;
     } catch (...) {
-        SYLAR_LOG_ERROR(g_logger) << "RockResponse parseFromByteArray error";
+        SY_LOG_ERROR(g_logger) << "RockResponse parseFromByteArray error";
     }
     return false;
 }
@@ -143,7 +143,7 @@ bool RockNotify::serializeToByteArray(ByteArray::ptr bytearray) {
         v &= RockBody::serializeToByteArray(bytearray);
         return v;
     } catch (...) {
-        SYLAR_LOG_ERROR(g_logger) << "RockNotify serializeToByteArray error";
+        SY_LOG_ERROR(g_logger) << "RockNotify serializeToByteArray error";
     }
     return false;
 }
@@ -155,7 +155,7 @@ bool RockNotify::parseFromByteArray(ByteArray::ptr bytearray) {
         v &= RockBody::parseFromByteArray(bytearray);
         return v;
     } catch (...) {
-        SYLAR_LOG_ERROR(g_logger) << "RockNotify parseFromByteArray error";
+        SY_LOG_ERROR(g_logger) << "RockNotify parseFromByteArray error";
     }
     return false;
 }
@@ -173,42 +173,42 @@ Message::ptr RockMessageDecoder::parseFrom(Stream::ptr stream) {
     try {
         RockMsgHeader header;
         if(stream->readFixSize(&header, sizeof(header)) <= 0) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder decode head error";
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder decode head error";
             return nullptr;
         }
 
         if(memcmp(header.magic, s_rock_magic, sizeof(s_rock_magic))) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder head.magic error";
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder head.magic error";
             return nullptr;
         }
 
         if(header.version != 0x1) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder head.version != 0x1";
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder head.version != 0x1";
             return nullptr;
         }
 
-        header.length = sylar::byteswapOnLittleEndian(header.length);
+        header.length = sy::byteswapOnLittleEndian(header.length);
         if((uint32_t)header.length >= g_rock_protocol_max_length->getValue()) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder head.length("
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder head.length("
                                       << header.length << ") >="
                                       << g_rock_protocol_max_length->getValue();
             return nullptr;
         }
-        sylar::ByteArray::ptr ba(new sylar::ByteArray);
+        sy::ByteArray::ptr ba(new sy::ByteArray);
         if(stream->readFixSize(ba, header.length) <= 0) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder read body fail length=" << header.length;
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder read body fail length=" << header.length;
             return nullptr;
         }
 
         ba->setPosition(0);
         if(header.flag & 0x1) { //gizp
-            auto zstream = sylar::ZlibStream::CreateGzip(false);
+            auto zstream = sy::ZlibStream::CreateGzip(false);
             if(zstream->write(ba, -1) != Z_OK) {
-                SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder ungzip error";
+                SY_LOG_ERROR(g_logger) << "RockMessageDecoder ungzip error";
                 return nullptr;
             }
             if(zstream->flush() != Z_OK) {
-                SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder ungzip flush error";
+                SY_LOG_ERROR(g_logger) << "RockMessageDecoder ungzip flush error";
                 return nullptr;
             }
             ba = zstream->getByteArray();
@@ -226,19 +226,19 @@ Message::ptr RockMessageDecoder::parseFrom(Stream::ptr stream) {
                 msg.reset(new RockNotify);
                 break;
             default:
-                SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder invalid type=" << (int)type;
+                SY_LOG_ERROR(g_logger) << "RockMessageDecoder invalid type=" << (int)type;
                 return nullptr;
         }
 
         if(!msg->parseFromByteArray(ba)) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder parseFromByteArray fail type=" << (int)type;
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder parseFromByteArray fail type=" << (int)type;
             return nullptr;
         }
         return msg;
     } catch (std::exception& e) {
-        SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder except:" << e.what();
+        SY_LOG_ERROR(g_logger) << "RockMessageDecoder except:" << e.what();
     } catch (...) {
-        SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder except";
+        SY_LOG_ERROR(g_logger) << "RockMessageDecoder except";
     }
     return nullptr;
 }
@@ -249,13 +249,13 @@ int32_t RockMessageDecoder::serializeTo(Stream::ptr stream, Message::ptr msg) {
     ba->setPosition(0);
     header.length = ba->getSize();
     if((uint32_t)header.length >= g_rock_protocol_gzip_min_length->getValue()) {
-        auto zstream = sylar::ZlibStream::CreateGzip(true);
+        auto zstream = sy::ZlibStream::CreateGzip(true);
         if(zstream->write(ba, -1) != Z_OK) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo gizp error";
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo gizp error";
             return -1;
         }
         if(zstream->flush() != Z_OK) {
-            SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo gizp flush error";
+            SY_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo gizp flush error";
             return -2;
         }
 
@@ -263,13 +263,13 @@ int32_t RockMessageDecoder::serializeTo(Stream::ptr stream, Message::ptr msg) {
         header.flag |= 0x1;
         header.length = ba->getSize();
     }
-    header.length = sylar::byteswapOnLittleEndian(header.length);
+    header.length = sy::byteswapOnLittleEndian(header.length);
     if(stream->writeFixSize(&header, sizeof(header)) <= 0) {
-        SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo write header fail";
+        SY_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo write header fail";
         return -3;
     }
     if(stream->writeFixSize(ba, ba->getReadSize()) <= 0) {
-        SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo write body fail";
+        SY_LOG_ERROR(g_logger) << "RockMessageDecoder serializeTo write body fail";
         return -4;
     }
     return sizeof(header) + ba->getSize();

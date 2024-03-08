@@ -1,36 +1,39 @@
-#include "sylar/sylar.h"
+#include "sy/sy.h"
+#include "sy/fiber.h"
+#include <string>
+#include <vector>
 
-sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+sy::Logger::ptr g_logger = SY_LOG_ROOT();
 
-void run_in_fiber() {
-    SYLAR_LOG_INFO(g_logger) << "run_in_fiber begin";
-    sylar::Fiber::YieldToHold();
-    SYLAR_LOG_INFO(g_logger) << "run_in_fiber end";
-    sylar::Fiber::YieldToHold();
+void run_in_fiber2() {
+    SY_LOG_INFO(g_logger) << "run_in_fiber2 begin";
+    SY_LOG_INFO(g_logger) << "run_in_fiber2 end";
 }
 
 void test_fiber() {
-    SYLAR_LOG_INFO(g_logger) << "main begin -1";
+    SY_LOG_INFO(g_logger) << "main begin -1";
     {
-        sylar::Fiber::GetThis();
-        SYLAR_LOG_INFO(g_logger) << "main begin";
-        sylar::Fiber::ptr fiber(new sylar::Fiber(run_in_fiber));
-        fiber->swapIn();
-        SYLAR_LOG_INFO(g_logger) << "main after swapIn";
-        fiber->swapIn();
-        SYLAR_LOG_INFO(g_logger) << "main after end";
-        fiber->swapIn();
+        sy::Fiber::GetThis(); //获得主协程 
+        SY_LOG_INFO(g_logger) << "main begin";
+        sy::Fiber::ptr fiber(new sy::Fiber(run_in_fiber)); //获得子协程，该协程与run_in_fiber方法绑定
+        fiber->resume(); //从当前主协程切换到子协程执行任务
+        SY_LOG_INFO(g_logger) << "main after resume";
+        fiber->resume();
+        SY_LOG_INFO(g_logger) << "main after end";
+        fiber->resume();
     }
-    SYLAR_LOG_INFO(g_logger) << "main after end2";
+    SY_LOG_INFO(g_logger) << "main after end2";
 }
 
+// 在main中创建了3个线程执行test_fiber函数，每个线程在创建时都绑定了各自的Thread::run方法，在run方法中执行test_fiber
+// run方法执行时会初始化线程信息：初始化t_thread，线程名称，线程id
 int main(int argc, char** argv) {
-    sylar::Thread::SetName("main");
+    sy::Thread::SetName("main");
 
-    std::vector<sylar::Thread::ptr> thrs;
+    std::vector<sy::Thread::ptr> thrs;
     for(int i = 0; i < 3; ++i) {
-        thrs.push_back(sylar::Thread::ptr(
-                    new sylar::Thread(&test_fiber, "name_" + std::to_string(i))));
+        thrs.push_back(sy::Thread::ptr(
+                    new sy::Thread(&test_fiber, "name_" + std::to_string(i))));
     }
     for(auto i : thrs) {
         i->join();

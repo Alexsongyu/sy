@@ -1,15 +1,15 @@
 #include "ws_session.h"
-#include "sylar/log.h"
-#include "sylar/endian.h"
+#include "sy/log.h"
+#include "sy/endian.h"
 #include <string.h>
 
-namespace sylar {
+namespace sy {
 namespace http {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
-sylar::ConfigVar<uint32_t>::ptr g_websocket_message_max_size
-    = sylar::Config::Lookup("websocket.message.max_size"
+sy::ConfigVar<uint32_t>::ptr g_websocket_message_max_size
+    = sy::Config::Lookup("websocket.message.max_size"
             ,(uint32_t) 1024 * 1024 * 32, "websocket message max size");
 
 WSSession::WSSession(Socket::ptr sock, bool owner)
@@ -21,29 +21,29 @@ HttpRequest::ptr WSSession::handleShake() {
     do {
         req = recvRequest();
         if(!req) {
-            SYLAR_LOG_INFO(g_logger) << "invalid http request";
+            SY_LOG_INFO(g_logger) << "invalid http request";
             break;
         }
         if(strcasecmp(req->getHeader("Upgrade").c_str(), "websocket")) {
-            SYLAR_LOG_INFO(g_logger) << "http header Upgrade != websocket";
+            SY_LOG_INFO(g_logger) << "http header Upgrade != websocket";
             break;
         }
         if(strcasecmp(req->getHeader("Connection").c_str(), "Upgrade")) {
-            SYLAR_LOG_INFO(g_logger) << "http header Connection != Upgrade";
+            SY_LOG_INFO(g_logger) << "http header Connection != Upgrade";
             break;
         }
         if(req->getHeaderAs<int>("Sec-webSocket-Version") != 13) {
-            SYLAR_LOG_INFO(g_logger) << "http header Sec-webSocket-Version != 13";
+            SY_LOG_INFO(g_logger) << "http header Sec-webSocket-Version != 13";
             break;
         }
         std::string key = req->getHeader("Sec-WebSocket-Key");
         if(key.empty()) {
-            SYLAR_LOG_INFO(g_logger) << "http header Sec-WebSocket-Key = null";
+            SY_LOG_INFO(g_logger) << "http header Sec-WebSocket-Key = null";
             break;
         }
 
         std::string v = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-        v = sylar::base64encode(sylar::sha1sum(v));
+        v = sy::base64encode(sy::sha1sum(v));
         req->setWebsocket(true);
 
         auto rsp = req->createResponse();
@@ -55,12 +55,12 @@ HttpRequest::ptr WSSession::handleShake() {
         rsp->setHeader("Sec-WebSocket-Accept", v);
 
         sendResponse(rsp);
-        SYLAR_LOG_DEBUG(g_logger) << *req;
-        SYLAR_LOG_DEBUG(g_logger) << *rsp;
+        SY_LOG_DEBUG(g_logger) << *req;
+        SY_LOG_DEBUG(g_logger) << *rsp;
         return req;
     } while(false);
     if(req) {
-        SYLAR_LOG_INFO(g_logger) << *req;
+        SY_LOG_INFO(g_logger) << *req;
     }
     return nullptr;
 }
@@ -108,10 +108,10 @@ WSFrameMessage::ptr WSRecvMessage(Stream* stream, bool client) {
         if(stream->readFixSize(&ws_head, sizeof(ws_head)) <= 0) {
             break;
         }
-        SYLAR_LOG_DEBUG(g_logger) << "WSFrameHead " << ws_head.toString();
+        SY_LOG_DEBUG(g_logger) << "WSFrameHead " << ws_head.toString();
 
         if(ws_head.opcode == WSFrameHead::PING) {
-            SYLAR_LOG_INFO(g_logger) << "PING";
+            SY_LOG_INFO(g_logger) << "PING";
             if(WSPong(stream) <= 0) {
                 break;
             }
@@ -120,7 +120,7 @@ WSFrameMessage::ptr WSRecvMessage(Stream* stream, bool client) {
                 || ws_head.opcode == WSFrameHead::TEXT_FRAME
                 || ws_head.opcode == WSFrameHead::BIN_FRAME) {
             if(!client && !ws_head.mask) {
-                SYLAR_LOG_INFO(g_logger) << "WSFrameHead mask != 1";
+                SY_LOG_INFO(g_logger) << "WSFrameHead mask != 1";
                 break;
             }
             uint64_t length = 0;
@@ -129,19 +129,19 @@ WSFrameMessage::ptr WSRecvMessage(Stream* stream, bool client) {
                 if(stream->readFixSize(&len, sizeof(len)) <= 0) {
                     break;
                 }
-                length = sylar::byteswapOnLittleEndian(len);
+                length = sy::byteswapOnLittleEndian(len);
             } else if(ws_head.payload == 127) {
                 uint64_t len = 0;
                 if(stream->readFixSize(&len, sizeof(len)) <= 0) {
                     break;
                 }
-                length = sylar::byteswapOnLittleEndian(len);
+                length = sy::byteswapOnLittleEndian(len);
             } else {
                 length = ws_head.payload;
             }
 
             if((cur_len + length) >= g_websocket_message_max_size->getValue()) {
-                SYLAR_LOG_WARN(g_logger) << "WSFrameMessage length > "
+                SY_LOG_WARN(g_logger) << "WSFrameMessage length > "
                     << g_websocket_message_max_size->getValue()
                     << " (" << (cur_len + length) << ")";
                 break;
@@ -169,11 +169,11 @@ WSFrameMessage::ptr WSRecvMessage(Stream* stream, bool client) {
             }
 
             if(ws_head.fin) {
-                SYLAR_LOG_DEBUG(g_logger) << data;
+                SY_LOG_DEBUG(g_logger) << data;
                 return WSFrameMessage::ptr(new WSFrameMessage(opcode, std::move(data)));
             }
         } else {
-            SYLAR_LOG_DEBUG(g_logger) << "invalid opcode=" << ws_head.opcode;
+            SY_LOG_DEBUG(g_logger) << "invalid opcode=" << ws_head.opcode;
         }
     } while(true);
     stream->close();
@@ -201,12 +201,12 @@ int32_t WSSendMessage(Stream* stream, WSFrameMessage::ptr msg, bool client, bool
         }
         if(ws_head.payload == 126) {
             uint16_t len = size;
-            len = sylar::byteswapOnLittleEndian(len);
+            len = sy::byteswapOnLittleEndian(len);
             if(stream->writeFixSize(&len, sizeof(len)) <= 0) {
                 break;
             }
         } else if(ws_head.payload == 127) {
-            uint64_t len = sylar::byteswapOnLittleEndian(size);
+            uint64_t len = sy::byteswapOnLittleEndian(size);
             if(stream->writeFixSize(&len, sizeof(len)) <= 0) {
                 break;
             }

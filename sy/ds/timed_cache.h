@@ -1,16 +1,16 @@
-#ifndef __SYLAR_DS_TIMED_CACHE_H__
-#define __SYLAR_DS_TIMED_CACHE_H__
+#ifndef __SY_DS_TIMED_CACHE_H__
+#define __SY_DS_TIMED_CACHE_H__
 
 #include "cache_status.h"
-#include "sylar/mutex.h"
-#include "sylar/util.h"
+#include "sy/mutex.h"
+#include "sy/util.h"
 #include <set>
 #include <unordered_map>
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
-template<class K, class V, class RWMutexType = sylar::RWMutex>
+template<class K, class V, class RWMutexType = sy::RWMutex>
 class TimedCache {
 private:
     struct Item {
@@ -58,7 +58,7 @@ public:
         if(it != m_cache.end()) {
             m_cache.erase(it);
         }
-        auto sit = m_timed.insert(Item(k, v, expired + sylar::GetCurrentMS()));
+        auto sit = m_timed.insert(Item(k, v, expired + sy::GetCurrentMS()));
         m_cache.insert(std::make_pair(k, sit.first));
         prune();
     }
@@ -108,7 +108,7 @@ public:
         if(it == m_cache.end()) {
             return false;
         }
-        uint64_t tts = ts + sylar::GetCurrentMS();
+        uint64_t tts = ts + sy::GetCurrentMS();
         if(it->second->ts == tts) {
             return true;
         }
@@ -178,7 +178,7 @@ public:
         }
     }
 
-    size_t checkTimeout(const uint64_t& ts = sylar::GetCurrentMS()) {
+    size_t checkTimeout(const uint64_t& ts = sy::GetCurrentMS()) {
         size_t size = 0;
         typename RWMutexType::WriteLock lock(m_mutex);
         for(auto it = m_timed.begin();
@@ -225,7 +225,7 @@ private:
     bool m_statusOwner = false;
 };
 
-template<class K, class V, class RWMutexType = sylar::RWMutex, class Hash = std::hash<K> >
+template<class K, class V, class RWMutexType = sy::RWMutex, class Hash = std::hash<K> >
 class HashTimedCache {
 public:
     typedef std::shared_ptr<HashTimedCache> ptr;
@@ -343,7 +343,7 @@ public:
         return ss.str();
     }
 
-    size_t checkTimeout(const uint64_t& ts = sylar::GetCurrentMS()) {
+    size_t checkTimeout(const uint64_t& ts = sy::GetCurrentMS()) {
         size_t size = 0;
         for(auto& i : m_datas) {
             size += i->checkTimeout(ts);

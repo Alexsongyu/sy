@@ -1,12 +1,12 @@
 #include "load_balance.h"
-#include "sylar/log.h"
-#include "sylar/worker.h"
-#include "sylar/macro.h"
+#include "sy/log.h"
+#include "sy/worker.h"
+#include "sy/macro.h"
 #include <math.h>
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
 HolderStats HolderStatsSet::getTotal() {
     HolderStats rt;
@@ -42,7 +42,7 @@ std::string HolderStats::toString() {
 void LoadBalanceItem::close() {
     if(m_stream) {
         auto stream = m_stream;
-        sylar::WorkerMgr::GetInstance()->schedule("service_io", [stream](){
+        sy::WorkerMgr::GetInstance()->schedule("service_io", [stream](){
             stream->close();
         });
     }
@@ -133,7 +133,7 @@ std::string LoadBalance::statusString(const std::string& prefix) {
     decltype(m_datas) datas = m_datas;
     lock.unlock();
     std::stringstream ss;
-    ss << prefix << "init_time: " << sylar::Time2Str(m_lastInitTime / 1000) << std::endl;
+    ss << prefix << "init_time: " << sy::Time2Str(m_lastInitTime / 1000) << std::endl;
     for(auto& i : datas) {
         ss << prefix << i.second->toString() << std::endl;
     }
@@ -141,7 +141,7 @@ std::string LoadBalance::statusString(const std::string& prefix) {
 }
 
 void LoadBalance::checkInit() {
-    uint64_t ts = sylar::GetCurrentMS();
+    uint64_t ts = sy::GetCurrentMS();
     if(ts - m_lastInitTime > 500) {
         init();
         m_lastInitTime = ts;
@@ -225,7 +225,7 @@ int32_t WeightLoadBalance::getIdx(uint64_t v) {
     uint64_t dis = (v == (uint64_t)-1 ? rand() : v) % total;
     auto it = std::upper_bound(m_weights.begin()
                 ,m_weights.end(), dis);
-    SYLAR_ASSERT(it != m_weights.end());
+    SY_ASSERT(it != m_weights.end());
     return std::distance(m_weights.begin(), it);
 }
 
@@ -411,7 +411,7 @@ LoadBalanceItem::ptr SDLoadBalance::createLoadBalanceItem(ILoadBalance::Type typ
 void SDLoadBalance::onServiceChange(const std::string& domain, const std::string& service
                             ,const std::unordered_map<uint64_t, ServiceItemInfo::ptr>& old_value
                             ,const std::unordered_map<uint64_t, ServiceItemInfo::ptr>& new_value) {
-    SYLAR_LOG_INFO(g_logger) << "onServiceChange domain=" << domain
+    SY_LOG_INFO(g_logger) << "onServiceChange domain=" << domain
                              << " service=" << service;
     auto type = getType(domain, service);
     auto lb = get(domain, service, true);
@@ -433,7 +433,7 @@ void SDLoadBalance::onServiceChange(const std::string& domain, const std::string
     for(auto& i : add_values) {
         auto stream = m_cb(i.second);
         if(!stream) {
-            SYLAR_LOG_ERROR(g_logger) << "create stream fail, " << i.second->toString();
+            SY_LOG_ERROR(g_logger) << "create stream fail, " << i.second->toString();
             continue;
         }
         

@@ -1,18 +1,18 @@
-#ifndef __SYLAR_ROCK_SERVER_H__
-#define __SYLAR_ROCK_SERVER_H__
+#ifndef __SY_ROCK_SERVER_H__
+#define __SY_ROCK_SERVER_H__
 
-#include "sylar/rock/rock_stream.h"
-#include "sylar/tcp_server.h"
+#include "sy/rock/rock_stream.h"
+#include "sy/tcp_server.h"
 
-namespace sylar {
+namespace sy {
 
 class RockServer : public TcpServer {
 public:
     typedef std::shared_ptr<RockServer> ptr;
     RockServer(const std::string& type = "rock"
-               ,sylar::IOManager* worker = sylar::IOManager::GetThis()
-               ,sylar::IOManager* io_worker = sylar::IOManager::GetThis()
-               ,sylar::IOManager* accept_worker = sylar::IOManager::GetThis());
+               ,sy::IOManager* worker = sy::IOManager::GetThis()
+               ,sy::IOManager* io_worker = sy::IOManager::GetThis()
+               ,sy::IOManager* accept_worker = sy::IOManager::GetThis());
 
 protected:
     virtual void handleClient(Socket::ptr client) override;

@@ -1,18 +1,18 @@
 #include "table.h"
-#include "sylar/util.h"
-#include "sylar/log.h"
+#include "sy/util.h"
+#include "sy/log.h"
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("orm");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("orm");
 
-void gen_cmake(const std::string& path, const std::map<std::string, sylar::orm::Table::ptr>& tbs) {
+void gen_cmake(const std::string& path, const std::map<std::string, sy::orm::Table::ptr>& tbs) {
     std::ofstream ofs(path + "/CMakeLists.txt");
     ofs << "cmake_minimum_required(VERSION 3.0)" << std::endl;
     ofs << "project(orm_data)" << std::endl;
     ofs << std::endl;
     ofs << "set(LIB_SRC" << std::endl;
     for(auto& i : tbs) {
-        ofs << "    " << sylar::replace(i.second->getNamespace(), ".", "/")
-            << "/" << sylar::ToLower(i.second->getFilename()) << ".cc" << std::endl;
+        ofs << "    " << sy::replace(i.second->getNamespace(), ".", "/")
+            << "/" << sy::ToLower(i.second->getFilename()) << ".cc" << std::endl;
     }
     ofs << ")" << std::endl;
     ofs << "add_library(orm_data ${LIB_SRC})" << std::endl;
@@ -34,31 +34,31 @@ int main(int argc, char** argv) {
         out_path = argv[2];
     }
     std::vector<std::string> files;
-    sylar::FSUtil::ListAllFile(files, input_path, ".xml");
-    std::vector<sylar::orm::Table::ptr> tbs;
+    sy::FSUtil::ListAllFile(files, input_path, ".xml");
+    std::vector<sy::orm::Table::ptr> tbs;
     bool has_error = false;
     for(auto& i : files) {
-        SYLAR_LOG_INFO(g_logger) << "init xml=" << i << " begin";
+        SY_LOG_INFO(g_logger) << "init xml=" << i << " begin";
         tinyxml2::XMLDocument doc;
         if(doc.LoadFile(i.c_str())) {
-            SYLAR_LOG_ERROR(g_logger) << "error: " << doc.ErrorStr();
+            SY_LOG_ERROR(g_logger) << "error: " << doc.ErrorStr();
             has_error = true;
         } else {
-            sylar::orm::Table::ptr table(new sylar::orm::Table);
+            sy::orm::Table::ptr table(new sy::orm::Table);
             if(!table->init(*doc.RootElement())) {
-                SYLAR_LOG_ERROR(g_logger) << "table init error";
+                SY_LOG_ERROR(g_logger) << "table init error";
                 has_error = true;
             } else {
                 tbs.push_back(table);
             }
         }
-        SYLAR_LOG_INFO(g_logger) << "init xml=" << i << " end";
+        SY_LOG_INFO(g_logger) << "init xml=" << i << " end";
     }
     if(has_error) {
         return 0;
     }
 
-    std::map<std::string, sylar::orm::Table::ptr> orm_tbs;
+    std::map<std::string, sy::orm::Table::ptr> orm_tbs;
     for(auto& i : tbs) {
         i->gen(out_path);
         orm_tbs[i->getName()] = i;

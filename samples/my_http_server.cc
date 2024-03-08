@@ -1,34 +1,34 @@
-#include "sylar/http/http_server.h"
-#include "sylar/log.h"
+#include "sy/http/http_server.h"
+#include "sy/log.h"
 
-sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
-sylar::IOManager::ptr worker;
+sy::Logger::ptr g_logger = SY_LOG_ROOT();
+sy::IOManager::ptr worker;
 void run() {
-    g_logger->setLevel(sylar::LogLevel::INFO);
-    sylar::Address::ptr addr = sylar::Address::LookupAnyIPAddress("0.0.0.0:8020");
+    g_logger->setLevel(sy::LogLevel::INFO);
+    sy::Address::ptr addr = sy::Address::LookupAnyIPAddress("0.0.0.0:8020");
     if(!addr) {
-        SYLAR_LOG_ERROR(g_logger) << "get address error";
+        SY_LOG_ERROR(g_logger) << "get address error";
         return;
     }
 
-    sylar::http::HttpServer::ptr http_server(new sylar::http::HttpServer(true, worker.get()));
-    //sylar::http::HttpServer::ptr http_server(new sylar::http::HttpServer(true));
+    sy::http::HttpServer::ptr http_server(new sy::http::HttpServer(true, worker.get()));
+    //sy::http::HttpServer::ptr http_server(new sy::http::HttpServer(true));
     bool ssl = false;
     while(!http_server->bind(addr, ssl)) {
-        SYLAR_LOG_ERROR(g_logger) << "bind " << *addr << " fail";
+        SY_LOG_ERROR(g_logger) << "bind " << *addr << " fail";
         sleep(1);
     }
 
     if(ssl) {
-        //http_server->loadCertificates("/home/apps/soft/sylar/keys/server.crt", "/home/apps/soft/sylar/keys/server.key");
+        //http_server->loadCertificates("/home/apps/soft/sy/keys/server.crt", "/home/apps/soft/sy/keys/server.key");
     }
 
     http_server->start();
 }
 
 int main(int argc, char** argv) {
-    sylar::IOManager iom(1);
-    worker.reset(new sylar::IOManager(4, false));
+    sy::IOManager iom(1);
+    worker.reset(new sy::IOManager(4, false));
     iom.schedule(run);
     return 0;
 }

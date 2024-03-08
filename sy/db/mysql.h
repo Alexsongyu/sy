@@ -1,16 +1,16 @@
-#ifndef __SYLAR_DB_MYSQL_H__
-#define __SYLAR_DB_MYSQL_H__
+#ifndef __SY_DB_MYSQL_H__
+#define __SY_DB_MYSQL_H__
 
 #include <mysql/mysql.h>
 #include <memory>
 #include <functional>
 #include <map>
 #include <vector>
-#include "sylar/mutex.h"
+#include "sy/mutex.h"
 #include "db.h"
-#include "sylar/singleton.h"
+#include "sy/singleton.h"
 
-namespace sylar {
+namespace sy {
 
 //typedef std::shared_ptr<MYSQL_RES> MySQLResPtr;
 //typedef std::shared_ptr<MYSQL> MySQLPtr;
@@ -158,7 +158,7 @@ public:
     ISQLData::ptr query(const std::string& sql) override;
 
     ITransaction::ptr openTransaction(bool auto_commit) override;
-    sylar::IStmt::ptr prepare(const std::string& sql) override;
+    sy::IStmt::ptr prepare(const std::string& sql) override;
 
     template<typename... Args>
     int execStmt(const char* stmt, Args&&... args);
@@ -275,7 +275,7 @@ private:
 
 class MySQLManager {
 public:
-    typedef sylar::Mutex MutexType;
+    typedef sy::Mutex MutexType;
 
     MySQLManager();
     ~MySQLManager();
@@ -324,7 +324,7 @@ public:
     static int TryExecute(const std::string& name, uint32_t count, const std::string& sql);
 };
 
-typedef sylar::Singleton<MySQLManager> MySQLMgr;
+typedef sy::Singleton<MySQLManager> MySQLMgr;
 
 namespace {
 

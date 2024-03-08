@@ -1,7 +1,7 @@
-#include "sylar/sylar.h"
-#include "sylar/ds/hash_multimap.h"
+#include "sy/sy.h"
+#include "sy/ds/hash_multimap.h"
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+static sy::Logger::ptr g_logger = SY_LOG_ROOT();
 
 struct PidVid {
     PidVid(uint32_t p = 0, uint32_t v = 0)
@@ -15,7 +15,7 @@ struct PidVid {
 };
 
 void gen() {
-    sylar::ds::HashMultimap<int, PidVid> tmp;
+    sy::ds::HashMultimap<int, PidVid> tmp;
     for(int i = 0; i < 500000; ++i) {
         int32_t len = rand() % 10 + 5;
         int k = rand();
@@ -30,14 +30,14 @@ void gen() {
 
 void test() {
     for(int i = 0; i < 10000; ++i) {
-        SYLAR_LOG_INFO(g_logger) << "i=" << i;
+        SY_LOG_INFO(g_logger) << "i=" << i;
         std::ifstream ifs("./hashmultimap.data");
-        sylar::ds::HashMultimap<int, PidVid> tmp;
+        sy::ds::HashMultimap<int, PidVid> tmp;
         if(!tmp.readFrom(ifs)) {
-            SYLAR_LOG_INFO(g_logger) << "error";
+            SY_LOG_INFO(g_logger) << "error";
         }
         if(i % 100 == 0) {
-            SYLAR_LOG_INFO(g_logger) << "over..." << (i + 1);
+            SY_LOG_INFO(g_logger) << "over..." << (i + 1);
         }
     }
 }

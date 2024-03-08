@@ -1,19 +1,19 @@
-#ifndef __SYLAR_DS_HASH_MULTIMAP_H__
-#define __SYLAR_DS_HASH_MULTIMAP_H__
+#ifndef __SY_DS_HASH_MULTIMAP_H__
+#define __SY_DS_HASH_MULTIMAP_H__
 
-#include "sylar/ds/util.h"
-#include "sylar/util.h"
-#include "sylar/mutex.h"
+#include "sy/ds/util.h"
+#include "sy/util.h"
+#include "sy/mutex.h"
 #include <memory>
 #include <functional>
 #include <iostream>
 
-namespace sylar {
+namespace sy {
 namespace ds {
 
 template<class K
         ,class V
-        ,class PosHash = sylar::ds::Murmur3Hash<K>
+        ,class PosHash = sy::ds::Murmur3Hash<K>
         >
 class HashMultimap {
 public:
@@ -34,9 +34,9 @@ public:
     }
 
     void rforeach(rcallback cb) {
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         for(size_t i = 0; i < m_size; ++i) {
-            sylar::RWMutex::ReadLock lock2(s_mutex[i % MAX_MUTEX]);
+            sy::RWMutex::ReadLock lock2(s_mutex[i % MAX_MUTEX]);
             for(auto n : m_datas[i]) {
                 if(!cb(n.key, n.val, n.size)) {
                     return;
@@ -46,9 +46,9 @@ public:
     }
 
     void wforeach(wcallback cb) {
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         for(size_t i = 0; i < m_size; ++i) {
-            sylar::RWMutex::ReadLock lock2(s_mutex[i % MAX_MUTEX]);
+            sy::RWMutex::ReadLock lock2(s_mutex[i % MAX_MUTEX]);
             for(auto n : m_datas[i]) {
                 if(!cb(n.key, n.val, n.size)) {
                     return;
@@ -59,7 +59,7 @@ public:
 
     SharedArray<V> get(const K& k, bool duplicate = true) {
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::ReadLock lock2(s_mutex[pos % MAX_MUTEX]);
         auto it = BinarySearch(m_datas[pos].begin(), m_datas[pos].end(), Node(k));
@@ -77,7 +77,7 @@ public:
 
     bool get(const K& k, std::vector<V>& v) {
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::ReadLock lock2(s_mutex[pos % MAX_MUTEX]);
         auto it = BinarySearch(m_datas[pos].begin(), m_datas[pos].end(), Node(k));
@@ -91,7 +91,7 @@ public:
 
     bool get(const K& k, V& v) {
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::ReadLock lock2(s_mutex[pos % MAX_MUTEX]);
         auto it = BinarySearch(m_datas[pos].begin(), m_datas[pos].end(), Node(k));
@@ -109,7 +109,7 @@ public:
 
     bool exists(const K& k) {
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::ReadLock lock2(s_mutex[pos % MAX_MUTEX]);
         auto it = BinarySearch(m_datas[pos].begin(), m_datas[pos].end(), Node(k));
@@ -118,7 +118,7 @@ public:
 
     bool exists(const K& k, const V& v) {
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::ReadLock lock2(s_mutex[pos % MAX_MUTEX]);
         auto it = BinarySearch(m_datas[pos].begin(), m_datas[pos].end(), Node(k));
@@ -136,7 +136,7 @@ public:
         }
 
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::WriteLock lock2(s_mutex[pos % MAX_MUTEX]);
 
@@ -151,8 +151,8 @@ public:
             SortLast(&m_datas[pos][0], m_datas[pos].size());
             //std::sort(m_datas[pos].begin(), m_datas[pos].end());
 
-            sylar::Atomic::addFetch(m_total);
-            sylar::Atomic::addFetch(m_elements);
+            sy::Atomic::addFetch(m_total);
+            sy::Atomic::addFetch(m_elements);
         } else {
             auto iit = BinarySearch(it->val, it->val + it->size, v);
             if(iit != it->val + it->size) {
@@ -169,7 +169,7 @@ public:
                 delete[] it->val;
             }
             it->val = datas;
-            sylar::Atomic::addFetch(m_elements);
+            sy::Atomic::addFetch(m_elements);
         }
         return true;
     }
@@ -180,7 +180,7 @@ public:
         }
 
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::WriteLock lock2(s_mutex[pos % MAX_MUTEX]);
 
@@ -196,8 +196,8 @@ public:
             SortLast(&m_datas[pos][0], m_datas[pos].size());
             //std::sort(m_datas[pos].begin(), m_datas[pos].end());
 
-            sylar::Atomic::addFetch(m_total);
-            sylar::Atomic::addFetch(m_elements, (uint64_t)size);
+            sy::Atomic::addFetch(m_total);
+            sy::Atomic::addFetch(m_elements, (uint64_t)size);
         } else {
             std::set<V> news;
             for(size_t i = 0; i < size; ++i) {
@@ -222,7 +222,7 @@ public:
                 delete[] it->val;
             }
             it->val = datas;
-            sylar::Atomic::addFetch(m_elements, news.size());
+            sy::Atomic::addFetch(m_elements, news.size());
         }
         return true;
     }
@@ -233,7 +233,7 @@ public:
         }
 
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::WriteLock lock2(s_mutex[pos % MAX_MUTEX]);
 
@@ -249,8 +249,8 @@ public:
             SortLast(&m_datas[pos][0], m_datas[pos].size());
             //std::sort(m_datas[pos].begin(), m_datas[pos].end());
 
-            sylar::Atomic::addFetch(m_total);
-            sylar::Atomic::addFetch(m_elements, (uint64_t)size);
+            sy::Atomic::addFetch(m_total);
+            sy::Atomic::addFetch(m_elements, (uint64_t)size);
         } else {
             V* datas = new V[size](); 
             memcpy(datas, v, size * sizeof(V));
@@ -260,7 +260,7 @@ public:
                 delete[] it->val;
             }
             it->val = datas;
-            sylar::Atomic::addFetch(m_elements, (uint64_t)size);
+            sy::Atomic::addFetch(m_elements, (uint64_t)size);
         }
         return true;
     }
@@ -268,7 +268,7 @@ public:
 
     bool del(const K& k) {
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::WriteLock lock2(s_mutex[pos % MAX_MUTEX]);
 
@@ -279,20 +279,20 @@ public:
             if(!inValues(it->val)) {
                 delete[] it->val;
             }
-            sylar::Atomic::subFetch(m_elements, (uint64_t)it->size);
+            sy::Atomic::subFetch(m_elements, (uint64_t)it->size);
             if(m_datas[pos].size() > 1) {
                 std::swap(*it, m_datas[pos].back());
             }
             m_datas[pos].resize(m_datas[pos].size() - 1);
             std::sort(m_datas[pos].begin(), m_datas[pos].end());
-            sylar::Atomic::subFetch(m_total);
+            sy::Atomic::subFetch(m_total);
         }
         return true;
     }
 
     bool del(const K& k, const V& v) {
         uint32_t hashvalue = m_posHash(k);
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         uint32_t pos = hashvalue % m_size;
         typename RWMutex::WriteLock lock2(s_mutex[pos % MAX_MUTEX]);
 
@@ -318,8 +318,8 @@ public:
                 m_datas[pos].resize(m_datas[pos].size() - 1);
                 std::sort(m_datas[pos].begin(), m_datas[pos].end());
 
-                sylar::Atomic::subFetch(m_total);
-                sylar::Atomic::subFetch(m_elements);
+                sy::Atomic::subFetch(m_total);
+                sy::Atomic::subFetch(m_elements);
                 return true;
             }
 
@@ -337,7 +337,7 @@ public:
     }
 
     void rehash() {
-        sylar::RWMutex::WriteLock lock(m_mutex);
+        sy::RWMutex::WriteLock lock(m_mutex);
         if(needRehash()) {
             rehashUnlock();
         }
@@ -359,7 +359,7 @@ public:
 
     //for K,V is POD
     bool writeTo(std::ostream& os, uint64_t speed = -1) {
-        sylar::RWMutex::ReadLock lock(m_mutex);
+        sy::RWMutex::ReadLock lock(m_mutex);
         os.write((const char*)&m_size, sizeof(m_size));
 
         std::vector<V> vs;
@@ -386,7 +386,7 @@ public:
         if(speed == (uint64_t)-1) {
             os.write((const char*)&vs[0], size);
         } else {
-            sylar::WriteFixToStreamWithSpeed(os, (const char*)&vs[0], size, speed);
+            sy::WriteFixToStreamWithSpeed(os, (const char*)&vs[0], size, speed);
         }
 
         size = ns.size() * sizeof(Node);
@@ -394,7 +394,7 @@ public:
         if(speed == (uint64_t)-1) {
             os.write((const char*)&ns[0], size);
         } else {
-            sylar::WriteFixToStreamWithSpeed(os, (const char*)&ns[0], size, speed);
+            sy::WriteFixToStreamWithSpeed(os, (const char*)&ns[0], size, speed);
         }
 
         //std::cout << "writeTo size: " << os.tellp() << std::endl;
@@ -533,20 +533,20 @@ private:
     uint64_t m_total;
     uint64_t m_elements;
     std::vector<Node>* m_datas;
-    sylar::RWMutex m_mutex;
+    sy::RWMutex m_mutex;
     PosHash m_posHash;
 
     std::vector<V> m_values;
 
     static const uint32_t MAX_MUTEX = 1024 * 128;
-    static sylar::RWMutex s_mutex[MAX_MUTEX];
+    static sy::RWMutex s_mutex[MAX_MUTEX];
 };
 
 template<class K
         ,class V
         ,class PosHash
         >
-sylar::RWMutex HashMultimap<K, V, PosHash>::s_mutex[MAX_MUTEX];
+sy::RWMutex HashMultimap<K, V, PosHash>::s_mutex[MAX_MUTEX];
 
 
 }

@@ -1,26 +1,26 @@
 #include "table.h"
-#include "sylar/log.h"
+#include "sy/log.h"
 #include "util.h"
 #include <set>
 
-namespace sylar {
+namespace sy {
 namespace orm {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("orm");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("orm");
 
 std::string Table::getFilename() const {
-    return sylar::ToLower(m_name + m_subfix);
+    return sy::ToLower(m_name + m_subfix);
 }
 
 bool Table::init(const tinyxml2::XMLElement& node) {
     if(!node.Attribute("name")) {
-        SYLAR_LOG_ERROR(g_logger) << "table name is null";
+        SY_LOG_ERROR(g_logger) << "table name is null";
         return false;
     }
 
     m_name = node.Attribute("name");
     if(!node.Attribute("namespace")) {
-        SYLAR_LOG_ERROR(g_logger) << "table namespace is null";
+        SY_LOG_ERROR(g_logger) << "table namespace is null";
         return false;
     }
     m_namespace = node.Attribute("namespace");
@@ -31,13 +31,13 @@ bool Table::init(const tinyxml2::XMLElement& node) {
 
     const tinyxml2::XMLElement* cols = node.FirstChildElement("columns");
     if(!cols) {
-        SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " columns is null";
+        SY_LOG_ERROR(g_logger) << "table name=" << m_name << " columns is null";
         return false;
     }
 
     const tinyxml2::XMLElement* col = cols->FirstChildElement("column");
     if(!col) {
-        SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " column is null";
+        SY_LOG_ERROR(g_logger) << "table name=" << m_name << " column is null";
         return false;
     }
 
@@ -46,11 +46,11 @@ bool Table::init(const tinyxml2::XMLElement& node) {
     do {
         Column::ptr col_ptr(new Column);
         if(!col_ptr->init(*col)) {
-            SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " init column error";
+            SY_LOG_ERROR(g_logger) << "table name=" << m_name << " init column error";
             return false;
         }
         if(col_names.insert(col_ptr->getName()).second == false) {
-            SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " column name="
+            SY_LOG_ERROR(g_logger) << "table name=" << m_name << " column name="
                 << col_ptr->getName() << " exists";
             return false;
         }
@@ -61,13 +61,13 @@ bool Table::init(const tinyxml2::XMLElement& node) {
 
     const tinyxml2::XMLElement* idxs = node.FirstChildElement("indexs");
     if(!idxs) {
-        SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " indexs is null";
+        SY_LOG_ERROR(g_logger) << "table name=" << m_name << " indexs is null";
         return false;
     }
 
     const tinyxml2::XMLElement* idx = idxs->FirstChildElement("index");
     if(!idx) {
-        SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " index is null";
+        SY_LOG_ERROR(g_logger) << "table name=" << m_name << " index is null";
         return false;
     }
 
@@ -76,18 +76,18 @@ bool Table::init(const tinyxml2::XMLElement& node) {
     do {
         Index::ptr idx_ptr(new Index);
         if(!idx_ptr->init(*idx)) {
-            SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " index init error";
+            SY_LOG_ERROR(g_logger) << "table name=" << m_name << " index init error";
             return false;
         }
         if(idx_names.insert(idx_ptr->getName()).second == false) {
-            SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " index name="
+            SY_LOG_ERROR(g_logger) << "table name=" << m_name << " index name="
                 << idx_ptr->getName() << " exists";
             return false;
         }
 
         if(idx_ptr->isPK()) {
             if(has_pk) {
-                SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " more than one pk"; 
+                SY_LOG_ERROR(g_logger) << "table name=" << m_name << " more than one pk"; 
                 return false;
             }
             has_pk = true;
@@ -96,7 +96,7 @@ bool Table::init(const tinyxml2::XMLElement& node) {
         auto& cnames = idx_ptr->getCols();
         for(auto& x : cnames) {
             if(col_names.count(x) == 0) {
-                SYLAR_LOG_ERROR(g_logger) << "table name=" << m_name << " idx="
+                SY_LOG_ERROR(g_logger) << "table name=" << m_name << " idx="
                     << idx_ptr->getName() << " col=" << x << " not exists";
                 return false;
             }
@@ -109,8 +109,8 @@ bool Table::init(const tinyxml2::XMLElement& node) {
 }
 
 void Table::gen(const std::string& path) {
-    std::string p = path + "/" + sylar::replace(m_namespace, ".", "/");
-    sylar::FSUtil::Mkdir(p);
+    std::string p = path + "/" + sy::replace(m_namespace, ".", "/");
+    sy::FSUtil::Mkdir(p);
     gen_inc(p);
     gen_src(p);
 }
@@ -130,14 +130,14 @@ void Table::gen_inc(const std::string& path) {
         ofs << "#include <" << i << ">" << std::endl;
     }
 
-    std::set<std::string> incs = {"sylar/db/db.h", "sylar/util.h"};
+    std::set<std::string> incs = {"sy/db/db.h", "sy/util.h"};
     for(auto& i : incs) {
         ofs << "#include \"" << i << "\"" << std::endl;
     }
     ofs << std::endl;
     ofs << std::endl;
 
-    std::vector<std::string> ns = sylar::split(m_namespace, '.');
+    std::vector<std::string> ns = sy::split(m_namespace, '.');
     for(auto it = ns.begin();
             it != ns.end(); ++it) {
         ofs << "namespace " << *it << " {" << std::endl;
@@ -211,14 +211,14 @@ std::string Table::genToStringSrc(const std::string& class_name) {
             ss << "std::to_string(" << GetAsMemberName((*it)->getName()) << ")"
                << ";" << std::endl;
         } else if((*it)->getDType() == Column::TYPE_TIMESTAMP) {
-            ss << "sylar::Time2Str(" << GetAsMemberName((*it)->getName()) << ")"
+            ss << "sy::Time2Str(" << GetAsMemberName((*it)->getName()) << ")"
                << ";" << std::endl;
         } else {
             ss << GetAsMemberName((*it)->getName())
                << ";" << std::endl;
         }
     }
-    ss << "    return sylar::JsonUtil::ToString(jvalue);" << std::endl;
+    ss << "    return sy::JsonUtil::ToString(jvalue);" << std::endl;
     ss << "}" << std::endl;
     return ss.str();
 }
@@ -229,17 +229,17 @@ void Table::gen_src(const std::string& path) {
     std::ofstream ofs(filename);
 
     ofs << "#include \"" << class_name + ".h\"" << std::endl;
-    ofs << "#include \"sylar/log.h\"" << std::endl;
+    ofs << "#include \"sy/log.h\"" << std::endl;
     ofs << std::endl;
 
-    std::vector<std::string> ns = sylar::split(m_namespace, '.');
+    std::vector<std::string> ns = sy::split(m_namespace, '.');
     for(auto it = ns.begin();
             it != ns.end(); ++it) {
         ofs << "namespace " << *it << " {" << std::endl;
     }
 
     ofs << std::endl;
-    ofs << "static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME(\"orm\");" << std::endl;
+    ofs << "static sy::Logger::ptr g_logger = SY_LOG_NAME(\"orm\");" << std::endl;
 
     ofs << std::endl;
     ofs << GetAsClassName(class_name) << "::" << GetAsClassName(class_name) << "()" << std::endl;
@@ -312,7 +312,7 @@ std::string Table::genToInsertSQL(const std::string& class_name) {
             ss << "    ss << \",\";" << std::endl;
         }
         if(m_cols[i]->getDType() == Column::TYPE_STRING) {
-            ss << "    ss << \"'\" << sylar::replace("
+            ss << "    ss << \"'\" << sy::replace("
                << GetAsMemberName(m_cols[i]->getName())
                << ", \"'\", \"''\") << \"'\";" << std::endl;
         } else {
@@ -344,7 +344,7 @@ std::string Table::genToUpdateSQL(const std::string& class_name) {
         ss << "        ss << \" " << m_cols[i]->getName()
            << " = ";
         if(m_cols[i]->getDType() == Column::TYPE_STRING) {
-            ss << "'\" << sylar::replace("
+            ss << "'\" << sy::replace("
                << GetAsMemberName(m_cols[i]->getName())
                << ", \"'\", \"''\") << \"'\";" << std::endl;
         } else {
@@ -385,7 +385,7 @@ std::string Table::genWhere() const {
         }
         ss << pks[i]->getName() << " = ";
         if(pks[i]->getDType() == Column::TYPE_STRING) {
-            ss << "'\" << sylar::replace("
+            ss << "'\" << sy::replace("
                << GetAsMemberName(m_cols[i]->getName())
                << ", \"'\", \"''\") << \"'\";" << std::endl;
         } else {
@@ -545,7 +545,7 @@ void Table::gen_dao_src(std::ofstream& ofs) {
 #define CHECK_STMT(v) \
     ofs << "    auto stmt = conn->prepare(sql);" << std::endl; \
     ofs << "    if(!stmt) {" << std::endl; \
-    ofs << "        SYLAR_LOG_ERROR(g_logger) << \"stmt=\" << sql" << std::endl << \
+    ofs << "        SY_LOG_ERROR(g_logger) << \"stmt=\" << sql" << std::endl << \
         "                 << \" errno=\"" \
         " << conn->getErrno() << \" errstr=\" << conn->getErrStr();" << std::endl \
         << "        return " v ";" << std::endl; \

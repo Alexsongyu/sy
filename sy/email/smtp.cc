@@ -1,30 +1,30 @@
 #include "smtp.h"
-#include "sylar/log.h"
+#include "sy/log.h"
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
 SmtpClient::SmtpClient(Socket::ptr sock)
-    :sylar::SocketStream(sock) {
+    :sy::SocketStream(sock) {
 }
 
 SmtpClient::ptr SmtpClient::Create(const std::string& host, uint32_t port, bool ssl) {
-    sylar::IPAddress::ptr addr = sylar::Address::LookupAnyIPAddress(host);
+    sy::IPAddress::ptr addr = sy::Address::LookupAnyIPAddress(host);
     if(!addr) {
-        SYLAR_LOG_ERROR(g_logger) << "invalid smtp server: " << host << ":" << port
+        SY_LOG_ERROR(g_logger) << "invalid smtp server: " << host << ":" << port
             << " ssl=" << ssl;
         return nullptr;
     }
     addr->setPort(port);
     Socket::ptr sock;
     if(ssl) {
-        sock = sylar::SSLSocket::CreateTCP(addr);
+        sock = sy::SSLSocket::CreateTCP(addr);
     } else {
-        sock = sylar::Socket::CreateTCP(addr);
+        sock = sy::Socket::CreateTCP(addr);
     }
     if(!sock->connect(addr)) {
-        SYLAR_LOG_ERROR(g_logger) << "connect smtp server: " << host << ":" << port
+        SY_LOG_ERROR(g_logger) << "connect smtp server: " << host << ":" << port
             << " ssl=" << ssl << " fail";
         return nullptr;
     }
@@ -37,7 +37,7 @@ SmtpClient::ptr SmtpClient::Create(const std::string& host, uint32_t port, bool 
         return nullptr;
     }
     buf.resize(len);
-    if(sylar::TypeUtil::Atoi(buf) != 220) {
+    if(sy::TypeUtil::Atoi(buf) != 220) {
         return nullptr;
     }
     rt->m_host = host;
@@ -60,10 +60,10 @@ SmtpResult::ptr SmtpClient::doCmd(const std::string& cmd, bool debug) {
         m_ss << "S: " << buf;
     }
 
-    int code = sylar::TypeUtil::Atoi(buf);
+    int code = sy::TypeUtil::Atoi(buf);
     if(code >= 400) {
         return std::make_shared<SmtpResult>(code,
-                sylar::replace(
+                sy::replace(
                     buf.substr(buf.find(' ') + 1)
                     , "\r\n", ""));
     }
@@ -90,9 +90,9 @@ SmtpResult::ptr SmtpClient::send(EMail::ptr email, int64_t timeout_ms, bool debu
         cmd = "AUTH LOGIN\r\n";
         DO_CMD();
         auto pos = email->getFromEMailAddress().find('@');
-        cmd = sylar::base64encode(email->getFromEMailAddress().substr(0, pos)) + "\r\n";
+        cmd = sy::base64encode(email->getFromEMailAddress().substr(0, pos)) + "\r\n";
         DO_CMD();
-        cmd = sylar::base64encode(email->getFromEMailPasswd()) + "\r\n";
+        cmd = sy::base64encode(email->getFromEMailPasswd()) + "\r\n";
         DO_CMD();
 
         m_authed = true;
@@ -143,7 +143,7 @@ SmtpResult::ptr SmtpClient::send(EMail::ptr email, int64_t timeout_ms, bool debu
     ss << "Subject: " << email->getTitle() << "\r\n";
     std::string boundary;
     if(!entitys.empty()) {
-        boundary = sylar::random_string(16);
+        boundary = sy::random_string(16);
         ss << "Content-Type: multipart/mixed;boundary="
            << boundary << "\r\n";
     }

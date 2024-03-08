@@ -1,11 +1,21 @@
-#ifndef __SYLAR_UTIL_JSON_UTIL_H__
-#define __SYLAR_UTIL_JSON_UTIL_H__
+#ifndef __SY_UTIL_JSON_UTIL_H__
+#define __SY_UTIL_JSON_UTIL_H__
 
 #include <string>
 #include <iostream>
+
+// 使用 extern "C" 包围 C 语言的头文件：告诉编译器这是C语言的头文件
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <json/json.h>
 
-namespace sylar {
+#ifdef __cplusplus
+}
+#endif
+
+namespace sy {
 
 class JsonUtil {
 public:

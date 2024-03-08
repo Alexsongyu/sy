@@ -1,7 +1,7 @@
 #include "http_session.h"
 #include "http_parser.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
 HttpSession::HttpSession(Socket::ptr sock, bool owner)

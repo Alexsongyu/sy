@@ -1,15 +1,15 @@
 #include "util.h"
-#include "sylar/util.h"
+#include "sy/util.h"
 
-namespace sylar {
+namespace sy {
 namespace orm {
 
 std::string GetAsVariable(const std::string& v) {
-    return sylar::ToLower(v);
+    return sy::ToLower(v);
 }
 
 std::string GetAsClassName(const std::string& v) {
-    auto vs = sylar::split(v, '_');
+    auto vs = sy::split(v, '_');
     std::stringstream ss;
     for(auto& i : vs) {
         i[0] = toupper(i[0]);
@@ -39,8 +39,8 @@ std::string XmlToString(const tinyxml2::XMLNode& node) {
 }
 
 std::string GetAsDefineMacro(const std::string& v) {
-    std::string tmp = sylar::replace(v, '.', '_');
-    tmp = sylar::ToUpper(tmp);
+    std::string tmp = sy::replace(v, '.', '_');
+    tmp = sy::ToUpper(tmp);
     return "__" + tmp + "__";
 }
 

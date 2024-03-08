@@ -1,11 +1,11 @@
-#ifndef __SYLAR_EMAIL_SMTP_H__
-#define __SYLAR_EMAIL_SMTP_H__
+#ifndef __SY_EMAIL_SMTP_H__
+#define __SY_EMAIL_SMTP_H__
 
-#include "sylar/streams/socket_stream.h"
+#include "sy/streams/socket_stream.h"
 #include "email.h"
 #include <sstream>
 
-namespace sylar {
+namespace sy {
 
 struct SmtpResult {
     typedef std::shared_ptr<SmtpResult> ptr;
@@ -23,7 +23,7 @@ struct SmtpResult {
     std::string msg;
 };
 
-class SmtpClient : public sylar::SocketStream {
+class SmtpClient : public sy::SocketStream {
 public:
     typedef std::shared_ptr<SmtpClient> ptr;
     static SmtpClient::ptr Create(const std::string& host, uint32_t port, bool ssl= false);

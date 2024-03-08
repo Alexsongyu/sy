@@ -1,17 +1,17 @@
 #include "http_server.h"
-#include "sylar/log.h"
-#include "sylar/http/servlets/config_servlet.h"
-#include "sylar/http/servlets/status_servlet.h"
+#include "sy/log.h"
+#include "sy/http/servlets/config_servlet.h"
+#include "sy/http/servlets/status_servlet.h"
 
-namespace sylar {
+namespace sy {
 namespace http {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
 HttpServer::HttpServer(bool keepalive
-               ,sylar::IOManager* worker
-               ,sylar::IOManager* io_worker
-               ,sylar::IOManager* accept_worker)
+               ,sy::IOManager* worker
+               ,sy::IOManager* io_worker
+               ,sy::IOManager* accept_worker)
     :TcpServer(worker, io_worker, accept_worker)
     ,m_isKeepalive(keepalive) {
     m_dispatch.reset(new ServletDispatch);
@@ -27,12 +27,12 @@ void HttpServer::setName(const std::string& v) {
 }
 
 void HttpServer::handleClient(Socket::ptr client) {
-    SYLAR_LOG_DEBUG(g_logger) << "handleClient " << *client;
+    SY_LOG_DEBUG(g_logger) << "handleClient " << *client;
     HttpSession::ptr session(new HttpSession(client));
     do {
         auto req = session->recvRequest();
         if(!req) {
-            SYLAR_LOG_DEBUG(g_logger) << "recv http request fail, errno="
+            SY_LOG_DEBUG(g_logger) << "recv http request fail, errno="
                 << errno << " errstr=" << strerror(errno)
                 << " cliet:" << *client << " keep_alive=" << m_isKeepalive;
             break;

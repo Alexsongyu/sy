@@ -1,16 +1,16 @@
 #include "fox_thread.h"
-#include "sylar/config.h"
-#include "sylar/log.h"
-#include "sylar/util.h"
-#include "sylar/macro.h"
-#include "sylar/config.h"
+#include "sy/config.h"
+#include "sy/log.h"
+#include "sy/util.h"
+#include "sy/macro.h"
+#include "sy/config.h"
 #include <iomanip>
 
-namespace sylar {
+namespace sy {
 
-static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static sy::Logger::ptr g_logger = SY_LOG_NAME("system");
 
-static sylar::ConfigVar<std::map<std::string, std::map<std::string, std::string> > >::ptr g_thread_info_set
+static sy::ConfigVar<std::map<std::string, std::map<std::string, std::string> > >::ptr g_thread_info_set
             = Config::Lookup("fox_thread", std::map<std::string, std::map<std::string, std::string> >()
                     ,"confg for thread");
 
@@ -31,15 +31,15 @@ void FoxThread::read_cb(evutil_socket_t sock, short which, void* args) {
         for(auto it = callbacks.begin();
                 it != callbacks.end(); ++it) {
             if(*it) {
-                //SYLAR_ASSERT(thread == GetThis());
+                //SY_ASSERT(thread == GetThis());
                 try {
                     (*it)();
                 } catch (std::exception& ex) {
-                    SYLAR_LOG_ERROR(g_logger) << "exception:" << ex.what();
+                    SY_LOG_ERROR(g_logger) << "exception:" << ex.what();
                 } catch (const char* c) {
-                    SYLAR_LOG_ERROR(g_logger) << "exception:" << c;
+                    SY_LOG_ERROR(g_logger) << "exception:" << c;
                 } catch (...) {
-                    SYLAR_LOG_ERROR(g_logger) << "uncatch exception";
+                    SY_LOG_ERROR(g_logger) << "uncatch exception";
                 }
             } else {
                 event_base_loopbreak(thread->m_base);
@@ -48,7 +48,7 @@ void FoxThread::read_cb(evutil_socket_t sock, short which, void* args) {
                 break;
             }
         }
-        sylar::Atomic::addFetch(thread->m_total, callbacks.size());
+        sy::Atomic::addFetch(thread->m_total, callbacks.size());
         thread->m_working = false;
     }
 }
@@ -65,7 +65,7 @@ FoxThread::FoxThread(const std::string& name, struct event_base* base)
     ,m_total(0) {
     int fds[2];
     if(evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == -1) {
-        //SYLAR_LOG_ERROR(g_logger) << "FoxThread init error";
+        //SY_LOG_ERROR(g_logger) << "FoxThread init error";
         throw std::logic_error("thread init error");
     }
 
@@ -134,7 +134,7 @@ FoxThread::~FoxThread() {
 
 void FoxThread::start() {
     if(m_thread) {
-        //SYLAR_LOG_ERROR(g_logger) << "FoxThread is running";
+        //SY_LOG_ERROR(g_logger) << "FoxThread is running";
         throw std::logic_error("FoxThread is running");
     }
 
@@ -267,7 +267,7 @@ void FoxThreadPool::releaseFoxThread(FoxThread* t) {
 
 bool FoxThreadPool::dispatch(callback cb) {
     do {
-        sylar::Atomic::addFetch(m_total, (uint64_t)1);
+        sy::Atomic::addFetch(m_total, (uint64_t)1);
         RWMutex::WriteLock lock(m_mutex);
         if(!m_advance) {
             return m_threads[m_cur++ % m_size]->dispatch(cb);
@@ -279,7 +279,7 @@ bool FoxThreadPool::dispatch(callback cb) {
 }
 
 bool FoxThreadPool::batchDispatch(const std::vector<callback>& cbs) {
-    sylar::Atomic::addFetch(m_total, cbs.size());
+    sy::Atomic::addFetch(m_total, cbs.size());
     RWMutex::WriteLock lock(m_mutex);
     if(!m_advance) {
         for(auto cb : cbs) {
@@ -328,7 +328,7 @@ void FoxThreadPool::wrapcb(std::shared_ptr<FoxThread> thr, callback cb) {
 }
 
 bool FoxThreadPool::dispatch(uint32_t id, callback cb) {
-    sylar::Atomic::addFetch(m_total, (uint64_t)1);
+    sy::Atomic::addFetch(m_total, (uint64_t)1);
     return m_threads[id % m_size]->dispatch(cb);
 }
 
@@ -364,7 +364,7 @@ const std::string& FoxThread::GetFoxThreadName() {
         return t->m_name;
     }
 
-    uint64_t tid = sylar::GetThreadId();
+    uint64_t tid = sy::GetThreadId();
     do {
         RWMutex::ReadLock lock(s_thread_mutex);
         auto it = s_thread_names.find(tid);
@@ -389,17 +389,17 @@ void FoxThread::GetAllFoxThreadName(std::map<uint64_t, std::string>& names) {
 }
 
 void FoxThread::setThis() {
-    m_name = m_name + "_" + std::to_string(sylar::GetThreadId());
+    m_name = m_name + "_" + std::to_string(sy::GetThreadId());
     s_thread = this;
 
     RWMutex::WriteLock lock(s_thread_mutex);
-    s_thread_names[sylar::GetThreadId()] = m_name;
+    s_thread_names[sy::GetThreadId()] = m_name;
 }
 
 void FoxThread::unsetThis() {
     s_thread = nullptr;
     RWMutex::WriteLock lock(s_thread_mutex);
-    s_thread_names.erase(sylar::GetThreadId());
+    s_thread_names.erase(sy::GetThreadId());
 }
 
 IFoxThread::ptr FoxThreadManager::get(const std::string& name) {
@@ -413,25 +413,25 @@ void FoxThreadManager::add(const std::string& name, IFoxThread::ptr thr) {
 
 void FoxThreadManager::dispatch(const std::string& name, callback cb) {
     IFoxThread::ptr ti = get(name);
-    SYLAR_ASSERT(ti);
+    SY_ASSERT(ti);
     ti->dispatch(cb);
 }
 
 void FoxThreadManager::dispatch(const std::string& name, uint32_t id, callback cb) {
     IFoxThread::ptr ti = get(name);
-    SYLAR_ASSERT(ti);
+    SY_ASSERT(ti);
     ti->dispatch(id, cb);
 }
 
 void FoxThreadManager::batchDispatch(const std::string& name, const std::vector<callback>& cbs) {
     IFoxThread::ptr ti = get(name);
-    SYLAR_ASSERT(ti);
+    SY_ASSERT(ti);
     ti->batchDispatch(cbs);
 }
 
 void FoxThreadManager::broadcast(const std::string& name, callback cb) {
     IFoxThread::ptr ti = get(name);
-    SYLAR_ASSERT(ti);
+    SY_ASSERT(ti);
     ti->broadcast(cb);
 }
 
@@ -455,11 +455,11 @@ void FoxThreadManager::dumpFoxThreadStatus(std::ostream& os) {
 void FoxThreadManager::init() {
     auto m = g_thread_info_set->getValue();
     for(auto i : m) {
-        auto num = sylar::GetParamValue(i.second, "num", 0);
+        auto num = sy::GetParamValue(i.second, "num", 0);
         auto name = i.first;
-        auto advance = sylar::GetParamValue(i.second, "advance", 0);
+        auto advance = sy::GetParamValue(i.second, "advance", 0);
         if(num <= 0) {
-            SYLAR_LOG_ERROR(g_logger) << "thread pool:" << name
+            SY_LOG_ERROR(g_logger) << "thread pool:" << name
                         << " num:" << num
                         << " advance:" << advance
                         << " invalid";
@@ -467,11 +467,11 @@ void FoxThreadManager::init() {
         }
         if(num == 1) {
             m_threads[i.first] = FoxThread::ptr(new FoxThread(i.first));
-            SYLAR_LOG_INFO(g_logger) << "init thread : " << i.first;
+            SY_LOG_INFO(g_logger) << "init thread : " << i.first;
         } else {
             m_threads[i.first] = FoxThreadPool::ptr(new FoxThreadPool(
                             num, name, advance));
-            SYLAR_LOG_INFO(g_logger) << "init thread pool:" << name
+            SY_LOG_INFO(g_logger) << "init thread pool:" << name
                        << " num:" << num
                        << " advance:" << advance;
         }
@@ -480,22 +480,22 @@ void FoxThreadManager::init() {
 
 void FoxThreadManager::start() {
     for(auto i : m_threads) {
-        SYLAR_LOG_INFO(g_logger) << "thread: " << i.first << " start begin";
+        SY_LOG_INFO(g_logger) << "thread: " << i.first << " start begin";
         i.second->start();
-        SYLAR_LOG_INFO(g_logger) << "thread: " << i.first << " start end";
+        SY_LOG_INFO(g_logger) << "thread: " << i.first << " start end";
     }
 }
 
 void FoxThreadManager::stop() {
     for(auto i : m_threads) {
-        SYLAR_LOG_INFO(g_logger) << "thread: " << i.first << " stop begin";
+        SY_LOG_INFO(g_logger) << "thread: " << i.first << " stop begin";
         i.second->stop();
-        SYLAR_LOG_INFO(g_logger) << "thread: " << i.first << " stop end";
+        SY_LOG_INFO(g_logger) << "thread: " << i.first << " stop end";
     }
     for(auto i : m_threads) {
-        SYLAR_LOG_INFO(g_logger) << "thread: " << i.first << " join begin";
+        SY_LOG_INFO(g_logger) << "thread: " << i.first << " join begin";
         i.second->join();
-        SYLAR_LOG_INFO(g_logger) << "thread: " << i.first << " join end";
+        SY_LOG_INFO(g_logger) << "thread: " << i.first << " join end";
     }
 }
 
