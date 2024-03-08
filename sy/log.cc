@@ -11,6 +11,7 @@
 
 namespace sy{
 
+// 通过宏定义将不同的日志级别放入 switch case语句，将日志级别的枚举值转换为对应的字符串
 const char* LogLevel::ToString(LogLevel::Level level) {
     switch(level) {
 #define XX(name) \
@@ -30,6 +31,7 @@ const char* LogLevel::ToString(LogLevel::Level level) {
     return "UNKNOW";
 }
 
+// 接收一个字符串 str，通过比较字符串与枚举值对应的字符串，返回对应的日志级别枚举值
 LogLevel::Level LogLevel::FromString(const std::string& str) {
 #define XX(level, v) \
     if(str == #v) { \
@@ -50,6 +52,7 @@ LogLevel::Level LogLevel::FromString(const std::string& str) {
 #undef XX
 }
 
+// 日志事件包装器：将logEvent打包，可以直接通过使用该类完成对日志的定义
 LogEventWrap::LogEventWrap(LogEvent::ptr e)
     :m_event(e) {
 }
@@ -94,6 +97,7 @@ LogFormatter::ptr LogAppender::getFormatter() {
     return m_formatter;
 }
 
+// 继承 LogFormatter::FormatItem类，重写override纯虚函数 format 将日志事件的特定信息 以指定的格式 输出到 ostream
 class MessageFormatItem : public LogFormatter::FormatItem {
 public:
     MessageFormatItem(const std::string& str = "") {}
@@ -161,10 +165,10 @@ public:
 
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
         struct tm tm;
-        time_t time = event->getTime();
-        localtime_r(&time, &tm);
-        char buf[64];
-        strftime(buf, sizeof(buf), m_format.c_str(), &tm);
+        time_t time = event->getTime();	//创建event时默认给的 time(0) 当前时间戳
+		localtime_r(&time, &tm);	//将给定时间戳转换为本地时间，并将结果存储在tm中
+		char buf[64];
+		strftime(buf, sizeof(buf), m_format.c_str(), &tm);	//将tm格式化为m_format格式，并存储到buf中
         os << buf;
     }
 private:
@@ -217,6 +221,7 @@ private:
     std::string m_string;
 };
 
+// 构造函数：初始化所有事件
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level
             ,const char* file, int32_t line, uint32_t elapse
             ,uint32_t thread_id, uint32_t fiber_id, uint64_t time
@@ -236,6 +241,7 @@ Logger::Logger(const std::string name) : m_name(name), m_level(LogLevel::DEBUG){
     m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
 }
 
+// 将新的formatter赋给m_formatter，若appender没有formatter，则将appender的formatter更新。
 void Logger::setFormatter(LogFormatter::ptr val) {
     MutexType::Lock lock(m_mutex);
     m_formatter = val;
@@ -247,7 +253,7 @@ void Logger::setFormatter(LogFormatter::ptr val) {
         }
     }
 }
-
+// new一个新的formatter，若格式没错，调用上面的setFormatter设置Formatter。
 void Logger::setFormatter(const std::string& val) {
     std::cout << "---" << val << std::endl;
     sy::LogFormatter::ptr new_val(new sy::LogFormatter(val));
@@ -260,7 +266,7 @@ void Logger::setFormatter(const std::string& val) {
     //m_formatter = new_val;
     setFormatter(new_val);
 }
-
+// 将当前logger name,level,formatter,appenders 转换为YAML格式按流输出
 std::string Logger::toYamlString() {
     MutexType::Lock lock(m_mutex);
     YAML::Node node;
@@ -287,6 +293,7 @@ LogFormatter::ptr Logger::getFormatter() {
 }
 
 // 在 m_appenders数组中 增加删除 appender
+// 若appender没有formatter的话就将默认formatter赋给他，若有formatter则直接添加到m_appenders队列中
 void Logger::addAppender(LogAppender::ptr appender){
     MutexType::Lock lock(m_mutex);
     if(!appender->getFormatter()) {
@@ -295,7 +302,7 @@ void Logger::addAppender(LogAppender::ptr appender){
     }
     m_appenders.push_back(appender);
 }
-    
+// 在m_appenders中找到要删除的appender，erase掉
 void Logger::delAppender(LogAppender::ptr appender){
     MutexType::Lock lock(m_mutex);
     for(auto it = m_appenders.begin(); it != m_appenders.end(); ++it){
@@ -311,6 +318,7 @@ void Logger::clearAppenders() {
     m_appenders.clear();
 }
 
+// 写不同Level日志到日志目标
 // 传入日志级别 > 当前日志级别，则记录日志事件
 void Logger::Log(LogLevel::Level level, LogEvent::ptr event){
     if(level >= m_level){
@@ -322,7 +330,7 @@ void Logger::Log(LogLevel::Level level, LogEvent::ptr event){
             }   
         }
         else if(m_root){
-            m_root->log(level, event);
+            m_root->log(level, event); //当logger的appenders为空时，使用root写logger
         }
     }
 }
@@ -421,7 +429,7 @@ LogFormatter::LogFormatter(const std::string& pattern) : m_pattern(pattern){
 
 // LogFormatter类 中 format函数 的实现
 // 遍历m_items，对每个 m_items 中的元素调用 format 函数，并将结果追加到 std::stringstream 对象 ss 中
-// 最后，通过 ss.str() 返回 ss 中的字符串表示形式
+// 最后，将解析后的日志信息输出到流中
 std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event){
     std::stringstream ss;
     for(auto i : m_items){
@@ -442,27 +450,31 @@ std::ostream& LogFormatter::format(std::ostream& ofs, std::shared_ptr<Logger> lo
 void LogFormatter::init() {
     //str, format, type
     std::vector<std::tuple<std::string, std::string, int> > vec;
-    std::string nstr;
+    std::string nstr; // 存放 [ ] :
     for(size_t i = 0; i < m_pattern.size(); ++i) {
         if(m_pattern[i] != '%') {
-            nstr.append(1, m_pattern[i]); // 如果当前字符不是%，则将其添加到nstr中
+            nstr.append(1, m_pattern[i]); // 如果当前字符不是%，则在nstr后面添加一个该字符
             continue;
         }
 
-        if((i + 1) < m_pattern.size()) {
+        if((i + 1) < m_pattern.size()) { //保证m_pattern不越界
             if(m_pattern[i + 1] == '%') {
-                nstr.append(1, '%'); // 如果下一个字符是%，则将%%作为一个字符添加到nstr中
+                nstr.append(1, '%'); // 如果下一个字符是%，则在nstr后面加上%
                 continue;
             }
         }
 
-        size_t n = i + 1;
-        int fmt_status = 0;
-        size_t fmt_begin = 0;
+        size_t n = i + 1;		//遇到'%'往下  (e.g.) n = 1, m_pattern[1] = 'd'
+		int fmt_status = 0;		//状态1: 解析时间{%Y-%m-%d %H:%M:%S} 状态0：解析之后的
+		size_t fmt_begin = 0;	//开始位置 为{
 
-        std::string str;
-        std::string fmt;
+		std::string str;		//d T t N等格式
+		std::string fmt;		//保存时间格式 %Y-%m-%d %H:%M:%S	
+
         while(n < m_pattern.size()) {
+            // fmt_status != 0, m_attern[n]不是字母，m_pattern[n]不是'{', m_pattern[n]不是'}'
+            // (e.g.) %T%  (i -> %, n -> T, while循环 n -> % 此时解析完一个T， break
+            // (e.g.) 遇到 [ ] break，取出[%p]中的p
             if(!fmt_status && (!isalpha(m_pattern[n]) && m_pattern[n] != '{'
                     && m_pattern[n] != '}')) {
                 str = m_pattern.substr(i + 1, n - i - 1); // 非 {} 直接将标记作为字符串处理
@@ -558,14 +570,13 @@ LoggerManager::LoggerManager() {
 
     init();
 }
-
+// 在map中找到相应的logger就返回他，若没有就创建一个logger并将他放到日志器容器m_loggers中，再返回他
 Logger::ptr LoggerManager::getLogger(const std::string& name) {
     MutexType::Lock lock(m_mutex);
     auto it = m_loggers.find(name);
     if(it != m_loggers.end()) {
         return it->second;
     }
-
     Logger::ptr logger(new Logger(name));
     logger->m_root = m_root;
     m_loggers[name] = logger;
