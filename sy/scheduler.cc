@@ -1,3 +1,4 @@
+// 协程调度器的实现
 #include "scheduler.h"
 #include "log.h"
 #include "macro.h"
@@ -14,7 +15,7 @@ static thread_local Fiber *t_scheduler_fiber = nullptr;
 
 // 初始化调度器
 Scheduler::Scheduler(size_t threads, bool use_caller, const std::string& name)
-    :m_name(name) {
+    :m_useCaller(use_caller), m_name(name) {
     SY_ASSERT(threads > 0); // 确定线程数量要正确
 
     // 使用 caller 线程执行调度任务

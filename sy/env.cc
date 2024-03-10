@@ -1,3 +1,4 @@
+// 环境变量管理接口实现
 #include "env.h"
 #include "sy/log.h"
 #include <string.h>

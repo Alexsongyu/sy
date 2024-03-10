@@ -18,7 +18,7 @@ static std::atomic<uint64_t> s_fiber_count {0};
 // 线程局部变量
 // 当前线程正在运行的协程：初始化时，指向线程主协程
 static thread_local Fiber *t_fiber = nullptr;
-// 当前线程的主协程：初始化时，指向线程主协程
+// 当前线程的主协程：初始化时，指向线程主协程。切换到了主协程就相当于切换到了主线程中运行。
 static thread_local Fiber::ptr t_threadFiber = nullptr;
 
 // 约定协程栈大小，可通过配置文件获取，默认128k
@@ -73,7 +73,7 @@ Fiber::ptr Fiber::GetThis() {
     return t_fiber->shared_from_this();
 }
 
-// 构造函数，用于创建用户协程
+// 有参构造函数，用于创建其他协程（用户协程）
 // 增加m_runInScheduler成员，表示当前协程是否参与调度器调度
 Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool run_in_scheduler)
     : m_id(s_fiber_id++)
@@ -109,7 +109,7 @@ Fiber::~Fiber() {
     } 
     // 没有栈，说明是线程的主协程
     else {
-        // 主协程的释放要保证没有任务cb并且当前正在运行
+        // 主协程的释放要保证：主协程没有任务cb，并且主协程当前正在运行
         SY_ASSERT(!m_cb);
         SY_ASSERT(m_state == RUNNING);
 

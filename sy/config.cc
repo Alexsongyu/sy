@@ -85,7 +85,9 @@ namespace sy
         }
     }
 
+    // 记录每个文件的修改时间
     static std::map<std::string, uint64_t> s_file2modifytime;
+    // 是否强制加载配置文件，非强制加载的情况下，如果记录的文件修改时间未变化，则跳过该文件的加载
     static sy::Mutex s_mutex;
 
     // 加载指定路径下的配置文件（.yml 文件）

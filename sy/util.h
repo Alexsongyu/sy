@@ -1,11 +1,4 @@
-/**
- * @file util.h
- * @brief 常用的工具函数
- * @author sy.yin
- * @email 564628276@qq.com
- * @date 2019-05-27
- * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
- */
+// 常用的工具函数
 #ifndef __SY_UTIL_H__
 #define __SY_UTIL_H__
 
@@ -30,67 +23,83 @@
 
 namespace sy {
 
-/**
- * @brief 返回当前线程的ID
- */
+// 获取线程id:这里不要把pid_t和pthread_t混淆，关于它们之的区别可参考gettid(2)
 pid_t GetThreadId();
 
-/**
- * @brief 返回当前协程的ID
- */
 uint32_t GetFiberId();
 
-/**
- * @brief 获取当前的调用栈
- * @param[out] bt 保存调用栈
- * @param[in] size 最多返回层数
- * @param[in] skip 跳过栈顶的层数
- */
+// 获取当前的调用栈：bt 保存调用栈，size 最多返回层数，skip 跳过栈顶的层数
 void Backtrace(std::vector<std::string>& bt, int size = 64, int skip = 1);
 
-/**
- * @brief 获取当前栈信息的字符串
- * @param[in] size 栈的最大层数
- * @param[in] skip 跳过栈顶的层数
- * @param[in] prefix 栈信息前输出的内容
- */
+// 获取当前栈信息的字符串：size 栈的最大层数，skip 跳过栈顶的层数，prefix 栈信息前输出的内容
 std::string BacktraceToString(int size = 64, int skip = 2, const std::string& prefix = "");
 
-/**
- * @brief 获取当前时间的毫秒
- */
+// 获取当前时间的毫秒
 uint64_t GetCurrentMS();
 
-/**
- * @brief 获取当前时间的微秒
- */
+// 获取当前时间的微秒
 uint64_t GetCurrentUS();
 
+// 获取线程名称，参考pthread_getname_np
+std::string GetThreadName();
+
+// 设置线程名称，参考pthread_setname_np(3)
+// 线程名称不能超过16字节，包括结尾的'\0'字符
+void SetThreadName(const std::string &name);
+
+// 字符串转大写
 std::string ToUpper(const std::string& name);
 
+// 字符串转小写
 std::string ToLower(const std::string& name);
 
+// 日期时间转字符串
 std::string Time2Str(time_t ts = time(0), const std::string& format = "%Y-%m-%d %H:%M:%S");
+
+// 字符串转日期时间
 time_t Str2Time(const char* str, const char* format = "%Y-%m-%d %H:%M:%S");
 
+// 文件系统操作类
 class FSUtil {
 public:
+    // 递归列举指定目录下所有指定后缀的常规文件，如果不指定后缀，则遍历所有文件，返回的文件名带路径: files 文件列表 , path 路径, subfix 后缀名，比如 ".yml"
     static void ListAllFile(std::vector<std::string>& files
                             ,const std::string& path
                             ,const std::string& subfix);
+
+    // 创建路径是否成功，相当于mkdir -p: dirname 路径名
     static bool Mkdir(const std::string& dirname);
+
+    // 判断指定pid文件指定的pid是否正在运行，使用kill(pid, 0)的方式判断: pidfile 保存进程号的文件
     static bool IsRunningPidfile(const std::string& pidfile);
-    static bool Rm(const std::string& path);
-    static bool Mv(const std::string& from, const std::string& to);
-    static bool Realpath(const std::string& path, std::string& rpath);
-    static bool Symlink(const std::string& frm, const std::string& to);
-    static bool Unlink(const std::string& filename, bool exist = false);
-    static std::string Dirname(const std::string& filename);
-    static std::string Basename(const std::string& filename);
-    static bool OpenForRead(std::ifstream& ifs, const std::string& filename
-                    ,std::ios_base::openmode mode);
-    static bool OpenForWrite(std::ofstream& ofs, const std::string& filename
-                    ,std::ios_base::openmode mode);
+
+    // 删除文件或路径
+    static bool Rm(const std::string &path);
+
+    //移动文件或路径，内部实现是先Rm(to)，再rename(from, to)，参考rename
+    static bool Mv(const std::string &from, const std::string &to);
+
+    // 返回绝对路径
+    // 路径中的符号链接会被解析成实际的路径，删除多余的'.' '..'和'/'
+    static bool Realpath(const std::string &path, std::string &rpath);
+
+    // 创建符号链接
+    static bool Symlink(const std::string &from, const std::string &to);
+
+    // 删除文件: filename 文件名, exist 是否存在, 内部会判断一次是否真的不存在该文件
+    static bool Unlink(const std::string &filename, bool exist = false);
+
+    // 输入文件名，返回文件路径：即路径中最后一个/前面的部分，不包括/本身，如果未找到，则返回filename
+    static std::string Dirname(const std::string &filename);
+
+    // 输入文件路径，返回文件名，即路径中最后一个/后面的部分
+    static std::string Basename(const std::string &filename);
+
+    // 以只读方式打开: ifs 文件流, mode 打开方式
+    static bool OpenForRead(std::ifstream &ifs, const std::string &filename, std::ios_base::openmode mode);
+
+    // 以只写方式打开：ofs 文件流
+    static bool OpenForWrite(std::ofstream &ofs, const std::string &filename, std::ios_base::openmode mode);
 };
 
 template<class V, class Map, class K>
@@ -120,9 +129,10 @@ bool CheckGetParamValue(const Map& m, const K& k, V& v) {
     return false;
 }
 
+// 类型转换
 class TypeUtil {
 public:
-    static int8_t ToChar(const std::string& str);
+    static int8_t ToChar(const std::string& str); // 转字符
     static int64_t Atoi(const std::string& str);
     static double Atof(const std::string& str);
     static int8_t ToChar(const char* str);

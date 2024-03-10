@@ -31,7 +31,7 @@ private:
     Fiber();
 
 public:
-    // 构造子协程：初始化子协程的ucontext_t上下文和栈空间
+    // 构造子协程（用户协程）：初始化子协程的ucontext_t上下文和栈空间
     // cb 协程入口函数，stacksize 协程栈大小，run_in_scheduler 本协程是否参与调度器调度，默认为true
     Fiber(std::function<void()> cb, size_t stacksize = 0, bool run_in_scheduler = true);
 

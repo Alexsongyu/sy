@@ -1,3 +1,4 @@
+// 信号量，互斥锁，读写锁，范围锁模板，自旋锁，原子锁
 #ifndef __SY_MUTEX_H__
 #define __SY_MUTEX_H__
 
@@ -18,13 +19,13 @@ namespace sy {
 // 信号量
 class Semaphore : Noncopyable {
 public:
-    Semaphore(uint32_t count = 0);
+    Semaphore(uint32_t count = 0); // 信号量值的大小
 
     ~Semaphore();
 
-    void wait();
+    void wait(); // 获取信号量
 
-    void notify();
+    void notify(); // 获取信号量
 private:
     sem_t m_semaphore; // 信号量，它本质上是一个长整型的数
 };
@@ -78,7 +79,6 @@ public:
     ~ReadScopedLockImpl() {
         unlock();
     }
-
 
     void lock() {
         if(!m_locked) {

@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include <functional>
 
+#include "mutex.h"
 #include "thread.h"
 #include "log.h"
 #include "util.h"
@@ -29,7 +30,7 @@ namespace sy
     {
     public:
         typedef std::shared_ptr<ConfigVarBase> ptr;
-        // 构造函数初始化：配置参数的名称和描述
+        // 构造函数初始化列表：配置参数的名称和描述
         ConfigVarBase(const std::string &name, const std::string &description = "")
             : m_name(name), m_description(description)
         {
@@ -55,8 +56,7 @@ namespace sy
     // 类型转换模板类(F 源类型, T 目标类型)
     // 这里的LexicalCast类是一个仿函数，它可将传入的F类型的参数v进行转换，并返回转换后的参数的目标类型T
     template <class F, class T>
-    class LexicalCast
-    {
+    class LexicalCast{
     public:
         T operator()(const F &v)
         {
