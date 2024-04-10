@@ -1,11 +1,4 @@
-/**
- * @file protocol.h
- * @brief 自定义协议
- * @author sy.yin
- * @email 564628276@qq.com
- * @date 2019-07-03
- * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
- */
+// 自定义协议
 #ifndef __SY_PROTOCOL_H__
 #define __SY_PROTOCOL_H__
 

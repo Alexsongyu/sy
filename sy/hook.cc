@@ -16,6 +16,8 @@ static sy::ConfigVar<int>::ptr g_tcp_connect_timeout =
 
 static thread_local bool t_hook_enable = false;
 
+// 获取接口原始地址
+// 使用宏来封装对每个原始接口地址的获取
 #define HOOK_FUN(XX) \
     XX(sleep) \
     XX(usleep) \
@@ -39,11 +41,16 @@ static thread_local bool t_hook_enable = false;
     XX(getsockopt) \
     XX(setsockopt)
 
+// 将hook_init()封装到一个结构体的构造函数中，并创建静态对象
+// 能够在main函数运行之前就能将地址保存到函数指针变量当中
 void hook_init() {
     static bool is_inited = false;
     if(is_inited) {
         return;
     }
+// dlsym - 从一个动态链接库或者可执行文件中获取到符号地址。成功返回跟name关联的地址
+// RTLD_NEXT 返回第一个匹配到的 "name" 的函数地址
+// 取出原函数，赋值给新函数
 #define XX(name) name ## _f = (name ## _fun)dlsym(RTLD_NEXT, #name);
     HOOK_FUN(XX);
 #undef XX
@@ -75,56 +82,60 @@ void set_hook_enable(bool flag) {
 
 }
 
+// 定时器超时条件
 struct timer_info {
     int cancelled = 0;
 };
 
+// fd文件描述符，fun原始函数，hook_fun_name	hook的函数名称，timeout_so超时时间类型，args可变参数
 template<typename OriginFun, typename... Args>
 static ssize_t do_io(int fd, OriginFun fun, const char* hook_fun_name,
         uint32_t event, int timeout_so, Args&&... args) {
-    if(!sy::t_hook_enable) {
+    if(!sy::t_hook_enable) { // 如果不hook，直接返回原接口
+        return fun(fd, std::forward<Args>(args)...); // 将传入的可变参数args以原始类型的方式传递给函数fun，从而避免不必要的类型转换和拷贝，提高代码的效率和性能。
+    }
+    
+    sy::FdCtx::ptr ctx = sy::FdMgr::GetInstance()->get(fd);  // 获取fd对应的FdCtx
+    if(!ctx) { // 没有文件
         return fun(fd, std::forward<Args>(args)...);
     }
 
-    sy::FdCtx::ptr ctx = sy::FdMgr::GetInstance()->get(fd);
-    if(!ctx) {
-        return fun(fd, std::forward<Args>(args)...);
-    }
-
-    if(ctx->isClose()) {
-        errno = EBADF;
+    if(ctx->isClose()) { // 句柄是否关闭
+        errno = EBADF; // 坏文件描述符
         return -1;
     }
 
-    if(!ctx->isSocket() || ctx->getUserNonblock()) {
+    if(!ctx->isSocket() || ctx->getUserNonblock()) { // 不是socket 或 用户设置了非阻塞
         return fun(fd, std::forward<Args>(args)...);
     }
 
-    uint64_t to = ctx->getTimeout(timeout_so);
-    std::shared_ptr<timer_info> tinfo(new timer_info);
+    uint64_t to = ctx->getTimeout(timeout_so); // 获得超时时间
+    std::shared_ptr<timer_info> tinfo(new timer_info); // 设置超时条件
 
 retry:
-    ssize_t n = fun(fd, std::forward<Args>(args)...);
-    while(n == -1 && errno == EINTR) {
+    ssize_t n = fun(fd, std::forward<Args>(args)...); // 先执行fun 读数据或写数据 若函数返回值有效就直接返回
+    while(n == -1 && errno == EINTR) { // 若中断则重试
         n = fun(fd, std::forward<Args>(args)...);
     }
-    if(n == -1 && errno == EAGAIN) {
-        sy::IOManager* iom = sy::IOManager::GetThis();
-        sy::Timer::ptr timer;
-        std::weak_ptr<timer_info> winfo(tinfo);
+    if(n == -1 && errno == EAGAIN) { // 若为阻塞状态
+        errno = 0; // 重置EAGIN(errno = 11)，此处已处理，不再向上返回该错误
+        sy::IOManager* iom = sy::IOManager::GetThis(); // 获得当前IO调度器
+        sy::Timer::ptr timer; // 定时器
+        std::weak_ptr<timer_info> winfo(tinfo); // tinfo的弱指针，可以判断tinfo是否已经销毁
 
-        if(to != (uint64_t)-1) {
-            timer = iom->addConditionTimer(to, [winfo, fd, iom, event]() {
+        if(to != (uint64_t)-1) { // 设置了超时时间
+            timer = iom->addConditionTimer(to, [winfo, fd, iom, event]() { // 添加条件定时器
                 auto t = winfo.lock();
-                if(!t || t->cancelled) {
+                if(!t || t->cancelled) { // 定时器失效了
                     return;
                 }
-                t->cancelled = ETIMEDOUT;
-                iom->cancelEvent(fd, (sy::IOManager::Event)(event));
+                t->cancelled = ETIMEDOUT; // 没错误的话设置为超时而失败
+                iom->cancelEvent(fd, (sy::IOManager::Event)(event)); // 取消事件强制唤醒
             }, winfo);
         }
 
         int rt = iom->addEvent(fd, (sy::IOManager::Event)(event));
+        // addEvent失败， 取消上面加的定时器
         if(SY_UNLIKELY(rt)) {
             SY_LOG_ERROR(g_logger) << hook_fun_name << " addEvent("
                 << fd << ", " << event << ")";
@@ -132,16 +143,21 @@ retry:
                 timer->cancel();
             }
             return -1;
-        } else {
-            sy::Fiber::YieldToHold();
+        } 
+        // addEvent成功，把执行时间让出来
+        // 只有两种情况会从这回来：
+        // 1) 超时了， timer cancelEvent triggerEvent会唤醒回来
+        // 2) addEvent数据回来了会唤醒回来
+        else {
+            sy::Fiber::GetThis()->yield();
             if(timer) {
                 timer->cancel();
             }
-            if(tinfo->cancelled) {
+            if(tinfo->cancelled) { // 从定时任务唤醒，超时失败
                 errno = tinfo->cancelled;
                 return -1;
             }
-            goto retry;
+            goto retry;  // 数据来了就直接重新去操作
         }
     }
     
@@ -150,7 +166,7 @@ retry:
 
 
 extern "C" {
-#define XX(name) name ## _fun name ## _f = nullptr;
+#define XX(name) name ## _fun name ## _f = nullptr;// 声明变量
     HOOK_FUN(XX);
 #undef XX
 
@@ -164,7 +180,7 @@ unsigned int sleep(unsigned int seconds) {
     iom->addTimer(seconds * 1000, std::bind((void(sy::Scheduler::*)
             (sy::Fiber::ptr, int thread))&sy::IOManager::schedule
             ,iom, fiber, -1));
-    sy::Fiber::YieldToHold();
+    sy::Fiber::GetThis()->yield();
     return 0;
 }
 
@@ -177,7 +193,7 @@ int usleep(useconds_t usec) {
     iom->addTimer(usec / 1000, std::bind((void(sy::Scheduler::*)
             (sy::Fiber::ptr, int thread))&sy::IOManager::schedule
             ,iom, fiber, -1));
-    sy::Fiber::YieldToHold();
+    sy::Fiber::GetThis()->yield();
     return 0;
 }
 
@@ -192,10 +208,11 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
     iom->addTimer(timeout_ms, std::bind((void(sy::Scheduler::*)
             (sy::Fiber::ptr, int thread))&sy::IOManager::schedule
             ,iom, fiber, -1));
-    sy::Fiber::YieldToHold();
+    sy::Fiber::GetThis()->yield();
     return 0;
 }
 
+// 创建socket
 int socket(int domain, int type, int protocol) {
     if(!sy::t_hook_enable) {
         return socket_f(domain, type, protocol);
@@ -226,63 +243,80 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
         return connect_f(fd, addr, addrlen);
     }
 
+    // ----- 异步开始 -----
+    // 先尝试连接
     int n = connect_f(fd, addr, addrlen);
-    if(n == 0) {
+    // 连接成功
+    if (n == 0) {
         return 0;
-    } else if(n != -1 || errno != EINPROGRESS) {
+    // 其他错误，EINPROGRESS表示连接操作正在进行中
+    } else if (n != -1 || errno != EINPROGRESS) {
         return n;
     }
-
+	
     sy::IOManager* iom = sy::IOManager::GetThis();
     sy::Timer::ptr timer;
     std::shared_ptr<timer_info> tinfo(new timer_info);
     std::weak_ptr<timer_info> winfo(tinfo);
 
-    if(timeout_ms != (uint64_t)-1) {
-        timer = iom->addConditionTimer(timeout_ms, [winfo, fd, iom]() {
-                auto t = winfo.lock();
-                if(!t || t->cancelled) {
-                    return;
-                }
-                t->cancelled = ETIMEDOUT;
-                iom->cancelEvent(fd, sy::IOManager::WRITE);
-        }, winfo);
+    // 设置了超时时间
+    if (timeout_ms != (uint64_t)-1) {
+        // 加条件定时器
+        timer = iom->addConditionTimer(timeout_ms, [iom, fd, winfo]() {
+            auto t = winfo.lock();
+            if (!t || t->cancelled) {
+                return;
+            }
+            t->cancelled = ETIMEDOUT;
+            iom->cancelEvent(fd, sy::IOManager::WRITE);
+            }, winfo);
     }
-
+    
+    // 添加一个写事件
     int rt = iom->addEvent(fd, sy::IOManager::WRITE);
-    if(rt == 0) {
-        sy::Fiber::YieldToHold();
-        if(timer) {
+    if (rt == 0) {
+        /* 	只有两种情况唤醒：
+         * 	1. 超时，从定时器唤醒
+         *	2. 连接成功，从epoll_wait拿到事件 */
+        sy::Fiber::GetThis()->yield();
+        if (timer) {
             timer->cancel();
         }
-        if(tinfo->cancelled) {
+        // 从定时器唤醒，超时失败
+        if (tinfo->cancelled) {
             errno = tinfo->cancelled;
             return -1;
         }
+      // 添加事件失败
     } else {
-        if(timer) {
+        if (timer) {
             timer->cancel();
         }
-        SY_LOG_ERROR(g_logger) << "connect addEvent(" << fd << ", WRITE) error";
+        SY_LOG_ERROR(sy::g_logger) << "connect addEvent(" << fd << ", WRITE) error";
     }
-
+	
     int error = 0;
     socklen_t len = sizeof(int);
-    if(-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
+    // 获取套接字的错误状态
+    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
         return -1;
     }
-    if(!error) {
+    // 没有错误，连接成功
+    if (!error) {
         return 0;
+    // 有错误，连接失败
     } else {
         errno = error;
         return -1;
     }
 }
 
+// socket连接
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     return connect_with_timeout(sockfd, addr, addrlen, sy::s_connect_timeout);
 }
 
+// 接收请求
 int accept(int s, struct sockaddr *addr, socklen_t *addrlen) {
     int fd = do_io(s, accept_f, "accept", sy::IOManager::READ, SO_RCVTIMEO, addr, addrlen);
     if(fd >= 0) {
@@ -291,6 +325,7 @@ int accept(int s, struct sockaddr *addr, socklen_t *addrlen) {
     return fd;
 }
 
+// 后续一系列发送和接收
 ssize_t read(int fd, void *buf, size_t count) {
     return do_io(fd, read_f, "read", sy::IOManager::READ, SO_RCVTIMEO, buf, count);
 }
@@ -331,6 +366,7 @@ ssize_t sendmsg(int s, const struct msghdr *msg, int flags) {
     return do_io(s, sendmsg_f, "sendmsg", sy::IOManager::WRITE, SO_SNDTIMEO, msg, flags);
 }
 
+// 关闭socket
 int close(int fd) {
     if(!sy::t_hook_enable) {
         return close_f(fd);
@@ -339,14 +375,15 @@ int close(int fd) {
     sy::FdCtx::ptr ctx = sy::FdMgr::GetInstance()->get(fd);
     if(ctx) {
         auto iom = sy::IOManager::GetThis();
-        if(iom) {
+        if(iom) { // 取消所有事件
             iom->cancelAll(fd);
         }
-        sy::FdMgr::GetInstance()->del(fd);
+        sy::FdMgr::GetInstance()->del(fd); // 在文件管理中删除
     }
     return close_f(fd);
 }
 
+// 修改文件状态：对用户反馈是否是用户设置了非阻塞模式
 int fcntl(int fd, int cmd, ... /* arg */ ) {
     va_list va;
     va_start(va, cmd);
@@ -434,6 +471,7 @@ int fcntl(int fd, int cmd, ... /* arg */ ) {
     }
 }
 
+// 对设备进行控制操作：打开或者关闭文件描述符的非阻塞模式
 int ioctl(int d, unsigned long int request, ...) {
     va_list va;
     va_start(va, request);

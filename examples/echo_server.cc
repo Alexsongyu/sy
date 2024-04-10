@@ -1,7 +1,7 @@
 #include "sy/tcp_server.h"
 #include "sy/log.h"
 #include "sy/iomanager.h"
-#include "sy/bytearray.h"
+#include "sy/socket.h"
 #include "sy/address.h"
 
 static sy::Logger::ptr g_logger = SY_LOG_ROOT();

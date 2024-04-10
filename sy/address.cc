@@ -67,128 +67,156 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
     std::string node;
     const char* service = NULL;
 
-    //检查 ipv6address serivce
-    if(!host.empty() && host[0] == '[') {
+    //  host = www.baidu.com:http
+    //  检查 ipv6address service  [address]:
+    if (!host.empty() && host[0] == '[') {
+        // 查找第一个 ] 的位置，返回该指针
         const char* endipv6 = (const char*)memchr(host.c_str() + 1, ']', host.size() - 1);
-        if(endipv6) {
-            //TODO check out of range
-            if(*(endipv6 + 1) == ':') {
+        // 找到了 ]
+        if (endipv6) {
+            //  是否为 ：
+            if (*(endipv6 + 1) == ':') {
+                //  endipv6后两个字节为端口号
                 service = endipv6 + 2;
             }
+            //  地址为[]里的内容
             node = host.substr(1, endipv6 - host.c_str() - 1);
         }
     }
-
-    //检查 node serivce
-    if(node.empty()) {
+​
+    //  ipv4    ip:port
+    if (node.empty()) {
+        // 找到第一个:
         service = (const char*)memchr(host.c_str(), ':', host.size());
-        if(service) {
-            if(!memchr(service + 1, ':', host.c_str() + host.size() - service - 1)) {
+        // 找到了
+        if (service) {
+            // 后面没有 : 了
+            if (!memchr(service + 1, ':', host.c_str() + host.size() - service - 1)) {
+                // 拿到地址
                 node = host.substr(0, service - host.c_str());
+                // ：后面就是端口号
                 ++service;
             }
         }
     }
-
-    if(node.empty()) {
+    // 如果没设置端口号，就将host赋给他
+    if (node.empty()) {
         node = host;
     }
+    // 获得地址链表
     int error = getaddrinfo(node.c_str(), service, &hints, &results);
-    if(error) {
-        SY_LOG_DEBUG(g_logger) << "Address::Lookup getaddress(" << host << ", "
-            << family << ", " << type << ") err=" << error << " errstr="
-            << gai_strerror(error);
+    if (error) {
+        SY_LOG_ERROR(g_logger) << "Address::Lookup getaddress(" << host
+            << ", " << family << ", " << type << ") error = " << error
+            << ", gai_strerror = " << gai_strerror(error);
         return false;
     }
-
+    
+    // results指向头节点，用next遍历
     next = results;
-    while(next) {
-        result.push_back(Create(next->ai_addr, (socklen_t)next->ai_addrlen));
-        //SY_LOG_INFO(g_logger) << ((sockaddr_in*)next->ai_addr)->sin_addr.s_addr;
+    while (next) {
+        // 将得到的地址创建出来放到result容器中
+        result.push_back(Create(next->ai_addr, next->ai_addrlen));
         next = next->ai_next;
     }
-
+    
+    // 释放addrinfo指针
     freeaddrinfo(results);
-    return !result.empty();
+    return true;
 }
 
-bool Address::GetInterfaceAddresses(std::multimap<std::string
-                    ,std::pair<Address::ptr, uint32_t> >& result,
-                    int family) {
-    struct ifaddrs *next, *results;
-    if(getifaddrs(&results) != 0) {
-        SY_LOG_DEBUG(g_logger) << "Address::GetInterfaceAddresses getifaddrs "
-            " err=" << errno << " errstr=" << strerror(errno);
+bool Address::GetInterfaceAddresses(std::multimap<std::string,
+                std::pair<Address::ptr, uint32_t> >& result, int family) {
+    struct ifaddrs* next, * results;
+    if (getifaddrs(&results) != 0) {
+        SY_LOG_ERROR(g_logger) << "Address::GetInterfaceAddress getifaddrs "
+            << "errno = " << errno << ", strerrno = " << strerror(errno);
+
         return false;
     }
-
+	
     try {
-        for(next = results; next; next = next->ifa_next) {
+        // results指向头节点，用next遍历
+        for (next = results; next; next = next->ifa_next) {
             Address::ptr addr;
-            uint32_t prefix_len = ~0u;
-            if(family != AF_UNSPEC && family != next->ifa_addr->sa_family) {
+            uint32_t prefix_length = ~0u;
+            // 地址族确定 并且 该地址族与解析出来的不同
+            if (family != AF_UNSPEC && family != next->ifa_addr->sa_family) {
                 continue;
             }
-            switch(next->ifa_addr->sa_family) {
+            switch (next->ifa_addr->sa_family) {
+                 	// IPv4
                 case AF_INET:
-                    {
+                    {	
+                        // 创建ipv4地址
                         addr = Create(next->ifa_addr, sizeof(sockaddr_in));
+                        // 掩码地址
                         uint32_t netmask = ((sockaddr_in*)next->ifa_netmask)->sin_addr.s_addr;
-                        prefix_len = CountBytes(netmask);
+                        // 前缀长度，网络地址的长度
+                        prefix_length = CountBytes(netmask);
                     }
                     break;
+                    // IPv6
                 case AF_INET6:
-                    {
+                    {	
+                        // 创建ipv6地址
                         addr = Create(next->ifa_addr, sizeof(sockaddr_in6));
+                        // 掩码地址
                         in6_addr& netmask = ((sockaddr_in6*)next->ifa_netmask)->sin6_addr;
-                        prefix_len = 0;
-                        for(int i = 0; i < 16; ++i) {
-                            prefix_len += CountBytes(netmask.s6_addr[i]);
+                        prefix_length = 0;
+                        // 前缀长度，16字节挨个算
+                        for (int i = 0; i < 16; ++i) {
+                            prefix_length += CountBytes(netmask.__in6_u.__u6_addr8[i]);
                         }
                     }
                     break;
                 default:
                     break;
             }
-
-            if(addr) {
-                result.insert(std::make_pair(next->ifa_name,
-                            std::make_pair(addr, prefix_len)));
+            //	插入到容器中，保存了网卡名，地址和前缀长度
+            if (addr) {
+                result.insert(std::make_pair(next->ifa_name, std::make_pair(addr, prefix_length)));
             }
         }
-    } catch (...) {
+    }
+    catch (...) {
         SY_LOG_ERROR(g_logger) << "Address::GetInterfaceAddresses exception";
         freeifaddrs(results);
         return false;
     }
+	
+    // 释放results
     freeifaddrs(results);
-    return !result.empty();
+    return true;
 }
 
-bool Address::GetInterfaceAddresses(std::vector<std::pair<Address::ptr, uint32_t> >&result
-                    ,const std::string& iface, int family) {
-    if(iface.empty() || iface == "*") {
-        if(family == AF_INET || family == AF_UNSPEC) {
+bool Address::GetInterfaceAddresses(std::vector<std::pair<Address::ptr, uint32_t> >& result,
+    const std::string& iface, int family) {
+    if (iface.empty() || iface == "*") {
+        //	创建监听任意IP地址的连接请求的ipv4
+        if (family == AF_INET || family == AF_UNSPEC) {
             result.push_back(std::make_pair(Address::ptr(new IPv4Address()), 0u));
         }
-        if(family == AF_INET6 || family == AF_UNSPEC) {
+        //	创建监听任意IP地址的连接请求的ipv6
+        if (family == AF_INET6 || family == AF_UNSPEC) {
             result.push_back(std::make_pair(Address::ptr(new IPv6Address()), 0u));
         }
         return true;
     }
-
-    std::multimap<std::string
-          ,std::pair<Address::ptr, uint32_t> > results;
-
-    if(!GetInterfaceAddresses(results, family)) {
+	
+    std::multimap<std::string, std::pair<Address::ptr, uint32_t> >results;
+    // 获取失败
+    if (!GetInterfaceAddresses(results, family)) {
         return false;
     }
-
+	
+    // 返回pair，first为第一个等于的迭代器，second为第一个大于的迭代器
     auto its = results.equal_range(iface);
-    for(; its.first != its.second; ++its.first) {
+    // 将first与second之间的全部拿出来
+    for (; its.first != its.second; ++its.first) {
         result.push_back(its.first->second);
     }
-    return !result.empty();
+    return true;
 }
 
 int Address::getFamily() const {
@@ -248,7 +276,7 @@ IPAddress::ptr IPAddress::Create(const char* address, uint16_t port) {
     memset(&hints, 0, sizeof(addrinfo));
 
     hints.ai_flags = AI_NUMERICHOST;
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = AF_UNSPEC; 
 
     int error = getaddrinfo(address, NULL, &hints, &results);
     if(error) {
@@ -275,7 +303,7 @@ IPAddress::ptr IPAddress::Create(const char* address, uint16_t port) {
 IPv4Address::ptr IPv4Address::Create(const char* address, uint16_t port) {
     IPv4Address::ptr rt(new IPv4Address);
     rt->m_addr.sin_port = byteswapOnLittleEndian(port);
-    int result = inet_pton(AF_INET, address, &rt->m_addr.sin_addr);
+    int result = inet_pton(AF_INET, address, &rt->m_addr.sin_addr); // 将一个IP地址的字符串表示转换为网络字节序的二进制形式
     if(result <= 0) {
         SY_LOG_DEBUG(g_logger) << "IPv4Address::Create(" << address << ", "
                 << port << ") rt=" << result << " errno=" << errno

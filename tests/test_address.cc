@@ -3,6 +3,7 @@
 
 sy::Logger::ptr g_logger = SY_LOG_ROOT();
 
+// 通过域名、IP、主机名获得对应Address
 void test() {
     std::vector<sy::Address::ptr> addrs;
 
@@ -28,6 +29,7 @@ void test() {
     }
 }
 
+// 通过静态方法获得本机的Address
 void test_iface() {
     std::multimap<std::string, std::pair<sy::Address::ptr, uint32_t> > results;
 

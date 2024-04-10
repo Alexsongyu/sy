@@ -56,18 +56,21 @@ void test1() {
 
 sy::Timer::ptr s_timer;
 void test_timer() {
-    sy::IOManager iom(2);
-    s_timer = iom.addTimer(1000, [](){
+    sy::IOManager iom(2, true, "IOM2");
+    s_timer = iom.addTimer(1000, []() {
         static int i = 0;
-        SY_LOG_INFO(g_logger) << "hello timer i=" << i;
-        if(++i == 3) {
+        SY_LOG_INFO(g_logger) << "hello timer i = " << i;
+        if (++i == 5) {
             s_timer->reset(2000, true);
-            //s_timer->cancel();
+        }
+        if (i == 10) {
+            s_timer->cancel();
         }
     }, true);
 }
 
 int main(int argc, char** argv) {
+    g_logger->setLevel(sy::LogLevel::INFO);
     //test1();
     test_timer();
     return 0;

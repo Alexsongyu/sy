@@ -39,12 +39,13 @@ bool TcpServer::bind(sy::Address::ptr addr, bool ssl) {
     return bind(addrs, fails, ssl);
 }
 
+// 绑定多个地址并监听
 bool TcpServer::bind(const std::vector<Address::ptr>& addrs
                         ,std::vector<Address::ptr>& fails
                         ,bool ssl) {
     m_ssl = ssl;
     for(auto& addr : addrs) {
-        Socket::ptr sock = ssl ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
+        Socket::ptr sock = ssl ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr); // 创建TCPsocket
         if(!sock->bind(addr)) {
             SY_LOG_ERROR(g_logger) << "bind fail errno="
                 << errno << " errstr=" << strerror(errno)
@@ -62,12 +63,12 @@ bool TcpServer::bind(const std::vector<Address::ptr>& addrs
         m_socks.push_back(sock);
     }
 
-    if(!fails.empty()) {
+    if(!fails.empty()) { // 有绑定失败的地址，清空监听socket数组
         m_socks.clear();
         return false;
     }
 
-    for(auto& i : m_socks) {
+    for(auto& i : m_socks) { // 绑定成功
         SY_LOG_INFO(g_logger) << "type=" << m_type
             << " name=" << m_name
             << " ssl=" << m_ssl

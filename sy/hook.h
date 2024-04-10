@@ -1,12 +1,3 @@
-/**
- * @file hook.h
- * @brief hook函数封装
- * @author sy.yin
- * @email 564628276@qq.com
- * @date 2019-06-02
- * @copyright Copyright (c) 2019年 sy.yin All rights reserved (www.sy.top)
- */
-
 #ifndef __SY_HOOK_H__
 #define __SY_HOOK_H__
 
@@ -19,16 +10,15 @@
 #include <unistd.h>
 
 namespace sy {
-    /**
-     * @brief 当前线程是否hook
-     */
+    // 当前线程是否hook
     bool is_hook_enable();
-    /**
-     * @brief 设置当前线程的hook状态
-     */
+    // 设置当前线程的hook状态
     void set_hook_enable(bool flag);
 }
 
+// 定义接口函数指针
+// 将函数接口都存放到extern "C"作用域下，指定函数按照C语言的方式进行编译和链接
+// 从而可以解决C++中函数名重载的问题，使得C++代码可以和C语言代码进行互操作
 extern "C" {
 
 //sleep
